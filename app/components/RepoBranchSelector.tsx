@@ -29,9 +29,24 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   
   // Create branch state
   const [showCreateBranch, setShowCreateBranch] = useState(false);
-  const [newBranchName, setNewBranchName] = useState("");
+  const [branchSuffix, setBranchSuffix] = useState("");
   const [creatingBranch, setCreatingBranch] = useState(false);
   const [branchSuccess, setBranchSuccess] = useState<string | null>(null);
+  const [timestamp, setTimestamp] = useState(() => generateTimestamp());
+
+  /**
+   * Generates a timestamp string for branch naming (YYYYMMDD-HHMMSS).
+   */
+  function generateTimestamp(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+    return `${year}${month}${day}-${hours}${minutes}${seconds}`;
+  }
 
   /**
    * Fetches branches for the selected repository.
@@ -119,11 +134,12 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   }
 
   /**
-   * Generates the full branch name with the stresst prefix.
+   * Generates the full branch name with the stresst prefix, timestamp, and optional suffix.
    */
   function getFullBranchName(suffix: string): string {
     if (!selectedBranch) return "";
-    return `stresst-${selectedBranch}-${suffix.trim()}`;
+    const base = `stresst-${selectedBranch}-${timestamp}`;
+    return suffix.trim() ? `${base}-${suffix.trim()}` : base;
   }
 
   /**
@@ -131,9 +147,9 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
    */
   async function handleCreateBranch(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedRepo || !selectedCommit || !selectedBranch || !newBranchName.trim()) return;
+    if (!selectedRepo || !selectedCommit || !selectedBranch) return;
 
-    const fullBranchName = getFullBranchName(newBranchName);
+    const fullBranchName = getFullBranchName(branchSuffix);
     
     setCreatingBranch(true);
     setError(null);
@@ -157,7 +173,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
       }
 
       setBranchSuccess(fullBranchName);
-      setNewBranchName("");
+      setBranchSuffix("");
       setShowCreateBranch(false);
       
       // Refresh branches list
@@ -469,7 +485,10 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
               {/* Create Branch Button */}
               {!showCreateBranch && (
                 <button
-                  onClick={() => setShowCreateBranch(true)}
+                  onClick={() => {
+                    setShowCreateBranch(true);
+                    setTimestamp(generateTimestamp());
+                  }}
                   className="inline-flex items-center gap-2 rounded-lg border border-[#238636] bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2ea043]"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -489,7 +508,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     type="button"
                     onClick={() => {
                       setShowCreateBranch(false);
-                      setNewBranchName("");
+                      setBranchSuffix("");
                     }}
                     className="text-[#8b949e] hover:text-white"
                   >
@@ -501,20 +520,20 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                 <div className="flex items-center gap-2">
                   <div className="flex items-center rounded-lg border border-[#30363d] bg-[#0d1117]">
                     <span className="whitespace-nowrap border-r border-[#30363d] bg-[#161b22] px-3 py-2 font-mono text-sm text-[#8b949e]">
-                      stresst-{selectedBranch}-
+                      stresst-{selectedBranch}-{timestamp}-
                     </span>
                     <input
                       type="text"
-                      value={newBranchName}
-                      onChange={(e) => setNewBranchName(e.target.value.replace(/\s/g, "-"))}
-                      placeholder="my-suffix"
+                      value={branchSuffix}
+                      onChange={(e) => setBranchSuffix(e.target.value.replace(/\s/g, "-"))}
+                      placeholder="optional-suffix"
                       className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-white placeholder-[#8b949e] focus:outline-none"
                       disabled={creatingBranch}
                     />
                   </div>
                   <button
                     type="submit"
-                    disabled={creatingBranch || !newBranchName.trim()}
+                    disabled={creatingBranch}
                     className="inline-flex flex-shrink-0 items-center gap-2 rounded-lg bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2ea043] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {creatingBranch ? (
@@ -527,8 +546,9 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     {creatingBranch ? "Creating..." : "Create"}
                   </button>
                 </div>
+
                 <p className="text-xs text-[#8b949e]">
-                  Full branch name: <code className="text-[#58a6ff]">{getFullBranchName(newBranchName) || `stresst-${selectedBranch}-...`}</code>
+                  Full branch name: <code className="text-[#58a6ff]">{getFullBranchName(branchSuffix)}</code>
                 </p>
               </form>
             )}
