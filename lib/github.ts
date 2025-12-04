@@ -18,6 +18,21 @@ export interface GitHubBranch {
   protected: boolean;
 }
 
+export interface GitHubCommit {
+  sha: string;
+  commit: {
+    message: string;
+    author: {
+      name: string;
+      date: string;
+    };
+  };
+  author: {
+    login: string;
+    avatar_url: string;
+  } | null;
+}
+
 /**
  * Fetches the authenticated user's repositories from GitHub.
  * 
@@ -64,6 +79,40 @@ export async function fetchRepoBranches(
 
   if (!response.ok) {
     throw new Error(`Failed to fetch branches: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetches the most recent commits for a specific branch.
+ * 
+ * @param accessToken - GitHub OAuth access token
+ * @param owner - Repository owner (username or org)
+ * @param repo - Repository name
+ * @param branch - Branch name
+ * @param limit - Number of commits to fetch (default: 10)
+ * @returns Array of commit objects
+ */
+export async function fetchBranchCommits(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  branch: string,
+  limit: number = 10
+): Promise<GitHubCommit[]> {
+  const response = await fetch(
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits?sha=${encodeURIComponent(branch)}&per_page=${limit}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch commits: ${response.statusText}`);
   }
 
   return response.json();
