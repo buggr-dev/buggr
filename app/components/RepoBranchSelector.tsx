@@ -37,9 +37,9 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   // Check if we're on a stresst-test branch
   const isStresstTestBranch = selectedBranch?.includes("stresst-test") ?? false;
   
-  // Chaos state
-  const [introducingChaos, setIntroducingChaos] = useState(false);
-  const [chaosResult, setChaosResult] = useState<{ message: string; results: { file: string; success: boolean; changes?: string[] }[] } | null>(null);
+  // Stress state
+  const [introducingStress, setIntroducingStress] = useState(false);
+  const [stressResult, setStressResult] = useState<{ message: string; results: { file: string; success: boolean; changes?: string[] }[] } | null>(null);
 
   /**
    * Generates a timestamp string for branch naming (YYYYMMDD-HHMMSS).
@@ -200,14 +200,14 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   }
 
   /**
-   * Introduces chaos by modifying files from the selected commit.
+   * Introduces stress by modifying files from the selected commit.
    */
-  async function handleIntroduceChaos() {
+  async function handleIntroduceStress() {
     if (!selectedRepo || !selectedBranch || !commitDetails?.files) return;
 
-    setIntroducingChaos(true);
+    setIntroducingStress(true);
     setError(null);
-    setChaosResult(null);
+    setStressResult(null);
 
     try {
       // Get the list of files from the commit
@@ -216,11 +216,11 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
         .map((f) => f.filename);
 
       if (filePaths.length === 0) {
-        setError("No files to introduce chaos to");
+        setError("No files to introduce stress to");
         return;
       }
 
-      const response = await fetch("/api/github/chaos", {
+      const response = await fetch("/api/github/stress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -234,17 +234,17 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to introduce chaos");
+        throw new Error(data.error || "Failed to introduce stress");
       }
 
-      setChaosResult(data);
+      setStressResult(data);
       
-      // Refresh commits to show the new chaos commit
+      // Refresh commits to show the new stress commit
       handleBranchSelect(selectedBranch);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to introduce chaos");
+      setError(err instanceof Error ? err.message : "Failed to introduce stress");
     } finally {
-      setIntroducingChaos(false);
+      setIntroducingStress(false);
     }
   }
 
@@ -557,37 +557,39 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                 </button>
               )}
 
-              {/* Introduce Chaos Button - only shown on stresst-test branches */}
-              {isStresstTestBranch && commitDetails && (
+              {/* Introduce Stress Button - only shown on stresst-test branches */}
+              {isStresstTestBranch && commitDetails && selectedCommit && (
                 <button
-                  onClick={handleIntroduceChaos}
-                  disabled={introducingChaos || !commitDetails.files?.length}
+                  onClick={handleIntroduceStress}
+                  disabled={introducingStress || !commitDetails.files?.length}
                   className="ml-auto inline-flex items-center gap-2 rounded-lg border border-[#da3633] bg-[#da3633] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#f85149] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {introducingChaos ? (
+                  {introducingStress ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   ) : (
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   )}
-                  {introducingChaos ? "Introducing Chaos..." : "Introduce Chaos"}
+                  {introducingStress 
+                    ? `Stressing ${selectedCommit.author?.login ?? selectedCommit.commit.author.name}...` 
+                    : `Stress this commit`}
                 </button>
               )}
             </div>
 
-            {/* Chaos Result */}
-            {chaosResult && (
+            {/* Stress Result */}
+            {stressResult && selectedCommit && (
               <div className="rounded-lg border border-[#da3633]/30 bg-[#da3633]/10 p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <h4 className="flex items-center gap-2 font-medium text-[#f85149]">
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    Chaos Introduced!
+                    {selectedCommit.author?.login ?? selectedCommit.commit.author.name} is now stressed! 😈
                   </h4>
                   <button
-                    onClick={() => setChaosResult(null)}
+                    onClick={() => setStressResult(null)}
                     className="text-[#8b949e] hover:text-white"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -595,9 +597,9 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     </svg>
                   </button>
                 </div>
-                <p className="mb-2 text-sm text-[#f85149]">{chaosResult.message}</p>
+                <p className="mb-2 text-sm text-[#f85149]">{stressResult.message}</p>
                 <div className="space-y-2">
-                  {chaosResult.results.filter(r => r.success).map((result) => (
+                  {stressResult.results.filter(r => r.success).map((result) => (
                     <div key={result.file} className="rounded border border-[#30363d] bg-[#161b22] p-2 text-xs">
                       <div className="font-mono text-white">{result.file}</div>
                       {result.changes && (

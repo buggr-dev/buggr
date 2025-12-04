@@ -10,7 +10,7 @@ import { generateText } from "ai";
  * @param filename - Name of the file
  * @returns Modified content with AI-generated breaking changes and description of changes
  */
-export async function introduceAIChaos(
+export async function introduceAIStress(
   content: string,
   filename: string
 ): Promise<{ content: string; changes: string[] }> {
@@ -22,11 +22,11 @@ export async function introduceAIChaos(
     const anthropicModule = await import("@ai-sdk/anthropic");
     anthropic = anthropicModule.anthropic;
   } catch {
-    console.warn("@ai-sdk/anthropic not installed, using fallback chaos");
-    return fallbackChaos(content, filename);
+    console.warn("@ai-sdk/anthropic not installed, using fallback stress");
+    return fallbackStress(content, filename);
   }
 
-  const prompt = `You are a chaos engineer tasked with introducing subtle but breaking bugs into code. 
+  const prompt = `You are a stress engineer tasked with introducing subtle but breaking bugs into code. 
 Your goal is to make changes that:
 1. Will cause the code to fail or behave incorrectly
 2. Are subtle and realistic - the kind of bugs developers actually make
@@ -87,24 +87,24 @@ The modifiedCode must be the COMPLETE file content with your bugs inserted. Do n
       changes: parsed.changes,
     };
   } catch (error) {
-    console.error("AI chaos generation failed:", error);
-    // Fallback to basic chaos if AI fails
-    return fallbackChaos(content, filename);
+    console.error("AI stress generation failed:", error);
+    // Fallback to basic stress if AI fails
+    return fallbackStress(content, filename);
   }
 }
 
 /**
- * Fallback chaos function if AI is unavailable.
+ * Fallback stress function if AI is unavailable.
  * Introduces realistic but simpler bugs.
  */
-function fallbackChaos(content: string, filename: string): { content: string; changes: string[] } {
+function fallbackStress(content: string, filename: string): { content: string; changes: string[] } {
   const changes: string[] = [];
   let modifiedContent = content;
   const ext = filename.split(".").pop()?.toLowerCase();
   
-  // TypeScript/JavaScript specific chaos
+  // TypeScript/JavaScript specific stress
   if (["ts", "tsx", "js", "jsx"].includes(ext || "")) {
-    // Chaos 1: Flip a comparison operator
+    // Stress 1: Flip a comparison operator
     if (modifiedContent.includes(" === ")) {
       modifiedContent = modifiedContent.replace(" === ", " !== ");
       changes.push("Inverted a strict equality check (=== → !==)");
@@ -113,7 +113,7 @@ function fallbackChaos(content: string, filename: string): { content: string; ch
       changes.push("Inverted an equality check (== → !=)");
     }
 
-    // Chaos 2: Change a < to <= (off-by-one)
+    // Stress 2: Change a < to <= (off-by-one)
     const loopMatch = modifiedContent.match(/for\s*\([^;]+;\s*\w+\s*<\s*\w+/);
     if (loopMatch) {
       modifiedContent = modifiedContent.replace(
@@ -123,20 +123,20 @@ function fallbackChaos(content: string, filename: string): { content: string; ch
       changes.push("Changed loop boundary from < to <= (off-by-one error)");
     }
 
-    // Chaos 3: Change && to || or vice versa
+    // Stress 3: Change && to || or vice versa
     if (modifiedContent.includes(" && ") && !changes.some(c => c.includes("&&"))) {
       modifiedContent = modifiedContent.replace(" && ", " || ");
       changes.push("Changed logical AND (&&) to OR (||)");
     }
 
-    // Chaos 4: Remove an 'await' keyword
+    // Stress 4: Remove an 'await' keyword
     const awaitMatch = modifiedContent.match(/await\s+\w+\(/);
     if (awaitMatch) {
       modifiedContent = modifiedContent.replace(awaitMatch[0], awaitMatch[0].replace("await ", ""));
       changes.push("Removed 'await' keyword (async operation now unhandled)");
     }
 
-    // Chaos 5: Change .length to .length - 1 or vice versa
+    // Stress 5: Change .length to .length - 1 or vice versa
     if (modifiedContent.includes(".length]")) {
       modifiedContent = modifiedContent.replace(".length]", ".length - 1]");
       changes.push("Changed array access from .length to .length - 1");
@@ -165,3 +165,4 @@ function fallbackChaos(content: string, filename: string): { content: string; ch
 
   return { content: modifiedContent, changes };
 }
+

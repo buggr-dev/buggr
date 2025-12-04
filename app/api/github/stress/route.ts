@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { fetchFileContent, updateFile } from "@/lib/github";
-import { introduceAIChaos } from "@/lib/ai-chaos";
+import { introduceAIStress } from "@/lib/ai-stress";
 
 /**
- * POST /api/github/chaos
+ * POST /api/github/stress
  * 
  * Uses AI to introduce subtle breaking changes to files that were modified in a commit.
  * Requires owner, repo, branch, and files (array of file paths) in the request body.
@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
         // Decode the content (it's base64 encoded)
         const decodedContent = Buffer.from(fileContent.content, "base64").toString("utf-8");
 
-        // Use AI to introduce subtle chaos
-        const { content: modifiedContent, changes } = await introduceAIChaos(decodedContent, filePath);
+        // Use AI to introduce subtle stress
+        const { content: modifiedContent, changes } = await introduceAIStress(decodedContent, filePath);
 
         // Only update if changes were made
         if (changes.length > 0 && modifiedContent !== decodedContent) {
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             repo,
             filePath,
             modifiedContent,
-            `🔥 Chaos introduced in ${filePath}`,
+            `🔥 Stress introduced in ${filePath}`,
             fileContent.sha,
             branch
           );
@@ -86,14 +86,15 @@ export async function POST(request: NextRequest) {
     const successCount = results.filter((r) => r.success).length;
 
     return NextResponse.json({
-      message: `Chaos introduced to ${successCount} of ${files.length} files`,
+      message: `Stress introduced to ${successCount} of ${files.length} files`,
       results,
     });
   } catch (error) {
-    console.error("Error introducing chaos:", error);
+    console.error("Error introducing stress:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to introduce chaos" },
+      { error: error instanceof Error ? error.message : "Failed to introduce stress" },
       { status: 500 }
     );
   }
 }
+
