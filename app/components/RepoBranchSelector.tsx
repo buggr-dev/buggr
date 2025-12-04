@@ -36,6 +36,10 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   
   // Check if we're on a stresst-test branch
   const isStresstTestBranch = selectedBranch?.includes("stresst-test") ?? false;
+  
+  // Chaos state
+  const [introducingChaos, setIntroducingChaos] = useState(false);
+  const [chaosResult, setChaosResult] = useState<{ message: string; results: { file: string; success: boolean; changes?: string[] }[] } | null>(null);
 
   /**
    * Generates a timestamp string for branch naming (YYYYMMDD-HHMMSS).
@@ -192,6 +196,55 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
       setError(err instanceof Error ? err.message : "Failed to create branch");
     } finally {
       setCreatingBranch(false);
+    }
+  }
+
+  /**
+   * Introduces chaos by modifying files from the selected commit.
+   */
+  async function handleIntroduceChaos() {
+    if (!selectedRepo || !selectedBranch || !commitDetails?.files) return;
+
+    setIntroducingChaos(true);
+    setError(null);
+    setChaosResult(null);
+
+    try {
+      // Get the list of files from the commit
+      const filePaths = commitDetails.files
+        .filter((f) => f.status !== "removed")
+        .map((f) => f.filename);
+
+      if (filePaths.length === 0) {
+        setError("No files to introduce chaos to");
+        return;
+      }
+
+      const response = await fetch("/api/github/chaos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner: selectedRepo.owner.login,
+          repo: selectedRepo.name,
+          branch: selectedBranch,
+          files: filePaths,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to introduce chaos");
+      }
+
+      setChaosResult(data);
+      
+      // Refresh commits to show the new chaos commit
+      handleBranchSelect(selectedBranch);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to introduce chaos");
+    } finally {
+      setIntroducingChaos(false);
     }
   }
 
@@ -505,21 +558,60 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
               )}
 
               {/* Introduce Chaos Button - only shown on stresst-test branches */}
-              {isStresstTestBranch && (
+              {isStresstTestBranch && commitDetails && (
                 <button
-                  onClick={() => {
-                    // TODO: Implement chaos introduction
-                    console.log("Introducing chaos...");
-                  }}
-                  className="ml-auto inline-flex items-center gap-2 rounded-lg border border-[#da3633] bg-[#da3633] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#f85149]"
+                  onClick={handleIntroduceChaos}
+                  disabled={introducingChaos || !commitDetails.files?.length}
+                  className="ml-auto inline-flex items-center gap-2 rounded-lg border border-[#da3633] bg-[#da3633] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#f85149] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Introduce Chaos
+                  {introducingChaos ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  )}
+                  {introducingChaos ? "Introducing Chaos..." : "Introduce Chaos"}
                 </button>
               )}
             </div>
+
+            {/* Chaos Result */}
+            {chaosResult && (
+              <div className="rounded-lg border border-[#da3633]/30 bg-[#da3633]/10 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="flex items-center gap-2 font-medium text-[#f85149]">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Chaos Introduced!
+                  </h4>
+                  <button
+                    onClick={() => setChaosResult(null)}
+                    className="text-[#8b949e] hover:text-white"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="mb-2 text-sm text-[#f85149]">{chaosResult.message}</p>
+                <div className="space-y-2">
+                  {chaosResult.results.filter(r => r.success).map((result) => (
+                    <div key={result.file} className="rounded border border-[#30363d] bg-[#161b22] p-2 text-xs">
+                      <div className="font-mono text-white">{result.file}</div>
+                      {result.changes && (
+                        <ul className="mt-1 list-inside list-disc text-[#8b949e]">
+                          {result.changes.map((change, i) => (
+                            <li key={i}>{change}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Create Branch Form */}
             {showCreateBranch && selectedBranch && (

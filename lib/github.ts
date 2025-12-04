@@ -211,3 +211,166 @@ export async function createBranch(
   return response.json();
 }
 
+export interface GitHubFileContent {
+  name: string;
+  path: string;
+  sha: string;
+  size: number;
+  content: string;
+  encoding: string;
+}
+
+/**
+ * Fetches the content of a file from a specific branch.
+ * 
+ * @param accessToken - GitHub OAuth access token
+ * @param owner - Repository owner (username or org)
+ * @param repo - Repository name
+ * @param path - File path
+ * @param branch - Branch name
+ * @returns File content object
+ */
+export async function fetchFileContent(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  path: string,
+  branch: string
+): Promise<GitHubFileContent> {
+  const response = await fetch(
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch file content: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Updates a file on a specific branch.
+ * 
+ * @param accessToken - GitHub OAuth access token
+ * @param owner - Repository owner (username or org)
+ * @param repo - Repository name
+ * @param path - File path
+ * @param content - New file content (will be base64 encoded)
+ * @param message - Commit message
+ * @param sha - Current file SHA (required for updates)
+ * @param branch - Branch name
+ * @returns Commit result
+ */
+export async function updateFile(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  path: string,
+  content: string,
+  message: string,
+  sha: string,
+  branch: string
+): Promise<{ commit: { sha: string } }> {
+  const response = await fetch(
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        content: Buffer.from(content).toString("base64"),
+        sha,
+        branch,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to update file: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Introduces chaos into code by adding breaking changes.
+ * 
+ * @param content - Original file content
+ * @param filename - Name of the file (to determine language)
+ * @returns Modified content with breaking changes
+ */
+export function introduceCodeChaos(content: string, filename: string): { content: string; changes: string[] } {
+  const changes: string[] = [];
+  let modifiedContent = content;
+  
+  const ext = filename.split(".").pop()?.toLowerCase();
+  
+  // TypeScript/JavaScript specific chaos
+  if (ext === "ts" || ext === "tsx" || ext === "js" || ext === "jsx") {
+    // Chaos 1: Change a random 'const' to 'cost' (typo)
+    if (modifiedContent.includes("const ")) {
+      const constMatches = modifiedContent.match(/const \w+/g);
+      if (constMatches && constMatches.length > 0) {
+        const randomConst = constMatches[Math.floor(Math.random() * constMatches.length)];
+        modifiedContent = modifiedContent.replace(randomConst, randomConst.replace("const", "cost"));
+        changes.push(`Introduced typo: 'const' → 'cost'`);
+      }
+    }
+    
+    // Chaos 2: Change === to == (potential logic bug)
+    if (modifiedContent.includes("===")) {
+      modifiedContent = modifiedContent.replace("===", "!==");
+      changes.push(`Flipped comparison: '===' → '!=='`);
+    }
+    
+    // Chaos 3: Remove a closing bracket
+    const closingBrackets = modifiedContent.match(/\}/g);
+    if (closingBrackets && closingBrackets.length > 2) {
+      // Find and remove one closing bracket (not the last one)
+      let count = 0;
+      const targetIndex = Math.floor(Math.random() * (closingBrackets.length - 1));
+      modifiedContent = modifiedContent.replace(/\}/g, (match) => {
+        if (count === targetIndex) {
+          count++;
+          changes.push(`Removed a closing bracket '}'`);
+          return ""; // Remove this bracket
+        }
+        count++;
+        return match;
+      });
+    }
+    
+    // Chaos 4: Change a function name slightly
+    const funcMatch = modifiedContent.match(/function\s+(\w+)/);
+    if (funcMatch) {
+      const originalName = funcMatch[1];
+      const brokenName = originalName + "_broken";
+      // Only change the definition, not the calls - this breaks references
+      modifiedContent = modifiedContent.replace(
+        new RegExp(`function\\s+${originalName}`),
+        `function ${brokenName}`
+      );
+      changes.push(`Renamed function: '${originalName}' → '${brokenName}'`);
+    }
+  }
+  
+  // If no changes were made, add a syntax error comment that breaks things
+  if (changes.length === 0) {
+    modifiedContent = `// CHAOS INTRODUCED - FIX ME!\n${modifiedContent}\n/* unclosed comment`;
+    changes.push("Added unclosed comment block");
+  }
+  
+  return { content: modifiedContent, changes };
+}
+
