@@ -10,6 +10,64 @@ export default async function Home() {
     ? await fetchUserRepos(session.accessToken).catch(() => [])
     : [];
 
+  // Show split layout when logged in
+  if (session?.user && repos.length > 0) {
+    return (
+      <div className="relative flex min-h-screen overflow-hidden bg-[#0d1117]">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#161b22] via-[#0d1117] to-[#010409]" />
+        
+        {/* Decorative grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(#30363d 1px, transparent 1px), linear-gradient(90deg, #30363d 1px, transparent 1px)`,
+            backgroundSize: '60px 60px'
+          }}
+        />
+
+        {/* Main split layout */}
+        <div className="relative z-10 flex w-full">
+          <RepoBranchSelector repos={repos} accessToken={session.accessToken!} />
+        </div>
+
+        {/* Header with user info and logout */}
+        <div className="absolute right-6 top-6 z-20 flex items-center gap-4">
+          <span className="text-sm text-[#8b949e]">
+            <span className="font-semibold text-white">{session.user.name}</span>
+          </span>
+          <form
+            action={async () => {
+              "use server";
+              await signOut();
+            }}
+          >
+            <button
+              type="submit"
+              className="flex items-center gap-2 rounded-lg border border-[#30363d] bg-[#21262d] px-3 py-1.5 text-sm font-medium text-white transition-all hover:bg-[#30363d]"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              Log out
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Login screen (centered layout)
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0d1117]">
       {/* Subtle gradient background */}
@@ -49,78 +107,37 @@ export default async function Home() {
           <h1 className="font-mono text-3xl font-bold tracking-tight text-white sm:text-4xl">
             stresst
           </h1>
-          {session?.user ? (
-            <p className="max-w-sm text-base text-[#8b949e]">
-              Welcome back, <span className="font-semibold text-white">{session.user.name}</span>
-            </p>
-          ) : (
-            <p className="max-w-sm text-base text-[#8b949e]">
-              Connect your GitHub account to get started
-            </p>
-          )}
+          <p className="max-w-sm text-base text-[#8b949e]">
+            Connect your GitHub account to get started
+          </p>
         </div>
 
-        {/* Auth Button */}
-        {session?.user ? (
-          <form
-            action={async () => {
-              "use server";
-              await signOut();
-            }}
+        {/* Connect Button */}
+        <form
+          action={async () => {
+            "use server";
+            await signIn("github");
+          }}
+        >
+          <button
+            type="submit"
+            className="group flex items-center gap-3 rounded-lg border border-[#30363d] bg-[#238636] px-6 py-3 text-base font-semibold text-white transition-all duration-200 hover:bg-[#2ea043] hover:shadow-lg hover:shadow-[#238636]/25 focus:outline-none focus:ring-2 focus:ring-[#238636] focus:ring-offset-2 focus:ring-offset-[#0d1117]"
           >
-            <button
-              type="submit"
-              className="group flex items-center gap-3 rounded-lg border border-[#30363d] bg-[#21262d] px-6 py-3 text-base font-semibold text-white transition-all duration-200 hover:bg-[#30363d] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#8b949e] focus:ring-offset-2 focus:ring-offset-[#0d1117]"
+            <svg
+              className="h-5 w-5 transition-transform duration-200 group-hover:scale-110"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
             >
-              <svg
-                className="h-5 w-5 transition-transform duration-200 group-hover:scale-110"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-              Log out
-            </button>
-          </form>
-        ) : (
-          <form
-            action={async () => {
-              "use server";
-              await signIn("github");
-            }}
-          >
-            <button
-              type="submit"
-              className="group flex items-center gap-3 rounded-lg border border-[#30363d] bg-[#238636] px-6 py-3 text-base font-semibold text-white transition-all duration-200 hover:bg-[#2ea043] hover:shadow-lg hover:shadow-[#238636]/25 focus:outline-none focus:ring-2 focus:ring-[#238636] focus:ring-offset-2 focus:ring-offset-[#0d1117]"
-            >
-              <svg
-                className="h-5 w-5 transition-transform duration-200 group-hover:scale-110"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Connect to GitHub
-            </button>
-          </form>
-        )}
-
-        {/* Repository and Branch Selector */}
-        {session?.user && repos.length > 0 && (
-          <RepoBranchSelector repos={repos} accessToken={session.accessToken!} />
-        )}
+              <path
+                fillRule="evenodd"
+                d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Connect to GitHub
+          </button>
+        </form>
       </main>
     </div>
   );
