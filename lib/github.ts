@@ -170,3 +170,44 @@ export async function fetchCommitDetails(
   return response.json();
 }
 
+/**
+ * Creates a new branch from a specific commit SHA.
+ * 
+ * @param accessToken - GitHub OAuth access token
+ * @param owner - Repository owner (username or org)
+ * @param repo - Repository name
+ * @param branchName - Name for the new branch
+ * @param sha - Commit SHA to branch from
+ * @returns The created reference object
+ */
+export async function createBranch(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  branchName: string,
+  sha: string
+): Promise<{ ref: string; url: string }> {
+  const response = await fetch(
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/refs`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ref: `refs/heads/${branchName}`,
+        sha: sha,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to create branch: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+

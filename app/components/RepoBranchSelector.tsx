@@ -26,6 +26,12 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   const [loadingCommits, setLoadingCommits] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Create branch state
+  const [showCreateBranch, setShowCreateBranch] = useState(false);
+  const [newBranchName, setNewBranchName] = useState("");
+  const [creatingBranch, setCreatingBranch] = useState(false);
+  const [branchSuccess, setBranchSuccess] = useState<string | null>(null);
 
   /**
    * Fetches branches for the selected repository.
@@ -109,6 +115,51 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
       setCommitDetails(null);
     } finally {
       setLoadingDetails(false);
+    }
+  }
+
+  /**
+   * Creates a new branch from the selected commit.
+   */
+  async function handleCreateBranch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedRepo || !selectedCommit || !newBranchName.trim()) return;
+
+    setCreatingBranch(true);
+    setError(null);
+    setBranchSuccess(null);
+
+    try {
+      const response = await fetch("/api/github/branch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner: selectedRepo.owner.login,
+          repo: selectedRepo.name,
+          branchName: newBranchName.trim(),
+          sha: selectedCommit.sha,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to create branch");
+      }
+
+      setBranchSuccess(newBranchName.trim());
+      setNewBranchName("");
+      setShowCreateBranch(false);
+      
+      // Refresh branches list
+      const branchesResponse = await fetch(`/api/github/branches?owner=${selectedRepo.owner.login}&repo=${selectedRepo.name}`);
+      if (branchesResponse.ok) {
+        const branchesData = await branchesResponse.json();
+        setBranches(branchesData);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create branch");
+    } finally {
+      setCreatingBranch(false);
     }
   }
 
@@ -381,25 +432,108 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                 <div className="rounded-lg border border-[#30363d] bg-[#161b22] px-4 py-3 text-sm text-[#8b949e]">No files changed</div>
               )}
             </div>
-            {/* View on GitHub Button */}
-            {selectedRepo && (
-              <a
-                href={`https://github.com/${selectedRepo.full_name}/commit/${selectedCommit.sha}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 self-start rounded-lg border border-[#30363d] bg-[#21262d] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#30363d]">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    fillRule="evenodd"
-                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                    clipRule="evenodd"
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* View on GitHub Button */}
+              {selectedRepo && (
+                <a
+                  href={`https://github.com/${selectedRepo.full_name}/commit/${selectedCommit.sha}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#30363d] bg-[#21262d] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#30363d]"
+                >
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      fillRule="evenodd"
+                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  View on GitHub
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              )}
+
+              {/* Create Branch Button */}
+              {!showCreateBranch && (
+                <button
+                  onClick={() => setShowCreateBranch(true)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#238636] bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2ea043]"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Branch
+                </button>
+              )}
+            </div>
+
+            {/* Create Branch Form */}
+            {showCreateBranch && (
+              <form onSubmit={handleCreateBranch} className="flex flex-col gap-3 rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-white">Create new branch from this commit</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateBranch(false);
+                      setNewBranchName("");
+                    }}
+                    className="text-[#8b949e] hover:text-white"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newBranchName}
+                    onChange={(e) => setNewBranchName(e.target.value)}
+                    placeholder="feature/my-new-branch"
+                    className="flex-1 rounded-lg border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-white placeholder-[#8b949e] focus:border-[#238636] focus:outline-none focus:ring-1 focus:ring-[#238636]"
+                    disabled={creatingBranch}
                   />
+                  <button
+                    type="submit"
+                    disabled={creatingBranch || !newBranchName.trim()}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2ea043] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {creatingBranch ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    {creatingBranch ? "Creating..." : "Create"}
+                  </button>
+                </div>
+                <p className="text-xs text-[#8b949e]">
+                  Branch will be created from commit <code className="text-[#58a6ff]">{selectedCommit.sha.substring(0, 7)}</code>
+                </p>
+              </form>
+            )}
+
+            {/* Branch Success Message */}
+            {branchSuccess && (
+              <div className="flex items-center gap-2 rounded-lg border border-[#238636]/30 bg-[#238636]/10 px-4 py-3 text-sm text-[#3fb950]">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                View on GitHub
-                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
+                Branch <code className="font-mono">{branchSuccess}</code> created successfully!
+                <button
+                  onClick={() => setBranchSuccess(null)}
+                  className="ml-auto text-[#3fb950] hover:text-white"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             )}
           </div>
         ) : selectedCommit ? (
