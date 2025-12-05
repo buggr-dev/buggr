@@ -1,17 +1,17 @@
 import { generateText } from "ai";
 
-/** Difficulty level configuration */
-type Difficulty = "easy" | "medium" | "hard";
+/** Stress level configuration */
+type StressLevel = "low" | "medium" | "high";
 
-interface DifficultyConfig {
+interface StressConfig {
   bugCountMin: number;
   bugCountMax: number;
   subtlety: string;
   description: string;
 }
 
-const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
-  easy: {
+const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
+  low: {
     bugCountMin: 1,
     bugCountMax: 2,
     subtlety: "relatively obvious",
@@ -23,7 +23,7 @@ const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     subtlety: "subtle but findable",
     description: "The bugs should require careful code review to find - off-by-one errors, subtle async issues, edge case failures. A mid-level developer should need to trace through the logic to find them.",
   },
-  hard: {
+  high: {
     bugCountMin: 3,
     bugCountMax: 5,
     subtlety: "deviously subtle",
@@ -40,14 +40,14 @@ const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
  * @param content - Original file content
  * @param filename - Name of the file
  * @param context - Optional context about what specific areas to focus bugs on (max 200 chars)
- * @param difficulty - Difficulty level: "easy", "medium", or "hard"
+ * @param stressLevel - Stress level: "low", "medium", or "high"
  * @returns Modified content with AI-generated breaking changes and description of changes
  */
 export async function introduceAIStress(
   content: string,
   filename: string,
   context?: string,
-  difficulty: Difficulty = "medium"
+  stressLevel: StressLevel = "medium"
 ): Promise<{ content: string; changes: string[] }> {
   // Dynamic import to handle optional dependency
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,10 +57,10 @@ export async function introduceAIStress(
     anthropic = anthropicModule.anthropic;
   } catch {
     console.warn("@ai-sdk/anthropic not installed, using fallback stress");
-    return fallbackStress(content, filename, context, difficulty);
+    return fallbackStress(content, filename, context, stressLevel);
   }
 
-  const config = DIFFICULTY_CONFIGS[difficulty];
+  const config = STRESS_CONFIGS[stressLevel];
 
   // Generate a random seed to encourage variety
   const randomSeed = Math.random().toString(36).substring(2, 15);
@@ -73,7 +73,7 @@ export async function introduceAIStress(
   
   const prompt = `You are a stress engineer tasked with introducing ${config.subtlety} breaking bugs into code.
   
-DIFFICULTY: ${difficulty.toUpperCase()}
+STRESS LEVEL: ${stressLevel.toUpperCase()}
 ${config.description}
 
 IMPORTANT: Be UNPREDICTABLE. Each time you modify code, choose DIFFERENT types of bugs. Do not fall into patterns.${focusInstruction}
@@ -81,12 +81,12 @@ IMPORTANT: Be UNPREDICTABLE. Each time you modify code, choose DIFFERENT types o
 Your goal is to make changes that:
 1. Will cause the code to fail or behave incorrectly
 2. Are realistic - the kind of bugs developers actually make
-3. Match the ${difficulty} difficulty level described above
+3. Match the ${stressLevel} stress level described above
 4. Are NOT obvious syntax errors that an IDE would immediately catch
 5. Are VARIED - do not always use the same bug patterns
 
 Random seed for this session: ${randomSeed}
-Number of bugs to introduce: ${bugCount} (difficulty: ${difficulty})
+Number of bugs to introduce: ${bugCount} (stress level: ${stressLevel})
 
 Choose ${bugCount} bugs RANDOMLY from this list (vary your choices each time!):
 - Off-by-one errors in loops or array access (e.g., < vs <=, [i] vs [i-1])
@@ -150,7 +150,7 @@ The modifiedCode must be the COMPLETE file content with your bugs inserted. Do n
   } catch (error) {
     console.error("AI stress generation failed:", error);
     // Fallback to basic stress if AI fails
-    return fallbackStress(content, filename, context, difficulty);
+    return fallbackStress(content, filename, context, stressLevel);
   }
 }
 
@@ -183,21 +183,21 @@ interface StressMutation {
 
 /**
  * Fallback stress function if AI is unavailable.
- * Randomly selects and applies mutations based on difficulty level.
+ * Randomly selects and applies mutations based on stress level.
  * 
  * @param content - Original file content
  * @param filename - Name of the file being modified
  * @param _context - Optional context (unused in fallback, but accepted for API compatibility)
- * @param difficulty - Difficulty level determines number of bugs to apply
+ * @param stressLevel - Stress level determines number of bugs to apply
  * @returns Modified content and list of changes made
  */
-function fallbackStress(content: string, filename: string, _context?: string, difficulty: Difficulty = "medium"): { content: string; changes: string[] } {
+function fallbackStress(content: string, filename: string, _context?: string, stressLevel: StressLevel = "medium"): { content: string; changes: string[] } {
   const changes: string[] = [];
   let modifiedContent = content;
   const ext = filename.split(".").pop()?.toLowerCase();
   
-  // Get bug count based on difficulty
-  const config = DIFFICULTY_CONFIGS[difficulty];
+  // Get bug count based on stress level
+  const config = STRESS_CONFIGS[stressLevel];
   
   // Define all possible mutations for TypeScript/JavaScript
   const jsMutations: StressMutation[] = [

@@ -31,7 +31,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   const [showCreateBranch, setShowCreateBranch] = useState(false);
   const [branchSuffix, setBranchSuffix] = useState("");
   const [stressContext, setStressContext] = useState("");
-  const [stressDifficulty, setStressDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [stressLevel, setStressLevel] = useState<"low" | "medium" | "high">("medium");
   const [creatingBranch, setCreatingBranch] = useState(false);
   const [branchSuccess, setBranchSuccess] = useState<string | null>(null);
   const [timestamp, setTimestamp] = useState(() => generateTimestamp());
@@ -203,7 +203,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
           branch: fullBranchName,
           files: filesToStress,
           context: stressContext.trim() || undefined,
-          difficulty: stressDifficulty,
+          difficulty: stressLevel,
         }),
       });
 
@@ -221,7 +221,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
 
       setBranchSuffix("");
       setStressContext("");
-      setStressDifficulty("medium");
+      setStressLevel("medium");
       setShowCreateBranch(false);
       
       // Refresh branches list and switch to the new branch
@@ -598,7 +598,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                       setShowCreateBranch(false);
                       setBranchSuffix("");
                       setStressContext("");
-                      setStressDifficulty("medium");
+                      setStressLevel("medium");
                     }}
                     className="text-[#8b949e] hover:text-white"
                   >
@@ -625,28 +625,28 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                   Full branch name: <code className="text-[#58a6ff]">{getFullBranchName(branchSuffix)}</code>
                 </p>
 
-                {/* Difficulty selector */}
+                {/* Stress level selector */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-[#8b949e]">Difficulty</label>
+                  <label className="text-xs font-medium text-[#8b949e]">Stress Level</label>
                   <div className="flex rounded-lg border border-[#30363d] bg-[#0d1117] p-1">
                     <button
                       type="button"
-                      onClick={() => setStressDifficulty("easy")}
+                      onClick={() => setStressLevel("low")}
                       disabled={creatingBranch}
                       className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                        stressDifficulty === "easy"
+                        stressLevel === "low"
                           ? "bg-[#238636] text-white"
                           : "text-[#8b949e] hover:text-white"
                       }`}
                     >
-                      🌱 Easy
+                      🌱 Low
                     </button>
                     <button
                       type="button"
-                      onClick={() => setStressDifficulty("medium")}
+                      onClick={() => setStressLevel("medium")}
                       disabled={creatingBranch}
                       className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                        stressDifficulty === "medium"
+                        stressLevel === "medium"
                           ? "bg-[#9e6a03] text-white"
                           : "text-[#8b949e] hover:text-white"
                       }`}
@@ -655,21 +655,21 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     </button>
                     <button
                       type="button"
-                      onClick={() => setStressDifficulty("hard")}
+                      onClick={() => setStressLevel("high")}
                       disabled={creatingBranch}
                       className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                        stressDifficulty === "hard"
+                        stressLevel === "high"
                           ? "bg-[#da3633] text-white"
                           : "text-[#8b949e] hover:text-white"
                       }`}
                     >
-                      💀 Hard
+                      💀 High
                     </button>
                   </div>
                   <p className="text-xs text-[#6e7681]">
-                    {stressDifficulty === "easy" && "1-2 straightforward bugs, easier to spot"}
-                    {stressDifficulty === "medium" && "2-3 subtle bugs, requires careful review"}
-                    {stressDifficulty === "hard" && "3-5 devious bugs, may require deep debugging"}
+                    {stressLevel === "low" && "1-2 straightforward bugs, easier to spot"}
+                    {stressLevel === "medium" && "2-3 subtle bugs, requires careful review"}
+                    {stressLevel === "high" && "3-5 devious bugs, may require deep debugging"}
                   </p>
                 </div>
 
