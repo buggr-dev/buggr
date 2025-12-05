@@ -34,11 +34,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   const [branchSuccess, setBranchSuccess] = useState<string | null>(null);
   const [timestamp, setTimestamp] = useState(() => generateTimestamp());
   
-  // Check if we're on a stresst-test branch
-  const isStresstTestBranch = selectedBranch?.includes("stresst-test") ?? false;
-  
-  // Stress state
-  const [introducingStress, setIntroducingStress] = useState(false);
+  // Stress result state
   const [stressResult, setStressResult] = useState<{ message: string; results: { file: string; success: boolean; changes?: string[] }[] } | null>(null);
 
   /**
@@ -150,19 +146,35 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   }
 
   /**
-   * Creates a new branch from the selected commit.
+   * Creates a new branch from the selected commit and automatically introduces stress.
+   * 
+   * @param e - Form submit event
+   * @returns void
+   * @sideeffects Creates branch, introduces stress mutations, and updates UI state
    */
   async function handleCreateBranch(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedRepo || !selectedCommit || !selectedBranch) return;
+    if (!selectedRepo || !selectedCommit || !selectedBranch || !commitDetails?.files) return;
 
     const fullBranchName = getFullBranchName(branchSuffix);
+    
+    // Get the list of files to stress before creating the branch
+    const filesToStress = commitDetails.files
+      .filter((f) => f.status !== "removed")
+      .map((f) => f.filename);
+
+    if (filesToStress.length === 0) {
+      setError("No files available to introduce stress to");
+      return;
+    }
     
     setCreatingBranch(true);
     setError(null);
     setBranchSuccess(null);
+    setStressResult(null);
 
     try {
+      // Step 1: Create the branch
       const response = await fetch("/api/github/branch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -179,7 +191,30 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
         throw new Error(data.error || "Failed to create branch");
       }
 
-      setBranchSuccess(fullBranchName);
+      // Step 2: Automatically introduce stress on the new branch
+      const stressResponse = await fetch("/api/github/stress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner: selectedRepo.owner.login,
+          repo: selectedRepo.name,
+          branch: fullBranchName,
+          files: filesToStress,
+        }),
+      });
+
+      const stressData = await stressResponse.json();
+
+      if (!stressResponse.ok) {
+        // Branch was created but stress failed - inform user
+        setBranchSuccess(fullBranchName);
+        setError(`Branch created, but stress failed: ${stressData.error || "Unknown error"}`);
+      } else {
+        // Both succeeded
+        setBranchSuccess(fullBranchName);
+        setStressResult(stressData);
+      }
+
       setBranchSuffix("");
       setShowCreateBranch(false);
       
@@ -196,55 +231,6 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
       setError(err instanceof Error ? err.message : "Failed to create branch");
     } finally {
       setCreatingBranch(false);
-    }
-  }
-
-  /**
-   * Introduces stress by modifying files from the selected commit.
-   */
-  async function handleIntroduceStress() {
-    if (!selectedRepo || !selectedBranch || !commitDetails?.files) return;
-
-    setIntroducingStress(true);
-    setError(null);
-    setStressResult(null);
-
-    try {
-      // Get the list of files from the commit
-      const filePaths = commitDetails.files
-        .filter((f) => f.status !== "removed")
-        .map((f) => f.filename);
-
-      if (filePaths.length === 0) {
-        setError("No files to introduce stress to");
-        return;
-      }
-
-      const response = await fetch("/api/github/stress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          owner: selectedRepo.owner.login,
-          repo: selectedRepo.name,
-          branch: selectedBranch,
-          files: filePaths,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to introduce stress");
-      }
-
-      setStressResult(data);
-      
-      // Refresh commits to show the new stress commit
-      handleBranchSelect(selectedBranch);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to introduce stress");
-    } finally {
-      setIntroducingStress(false);
     }
   }
 
@@ -541,39 +527,19 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                 </a>
               )}
 
-              {/* Create Branch Button */}
+              {/* Create Branch & Stress Button */}
               {!showCreateBranch && (
                 <button
                   onClick={() => {
                     setShowCreateBranch(true);
                     setTimestamp(generateTimestamp());
                   }}
-                  className="inline-flex items-center gap-2 rounded-lg border border-[#238636] bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2ea043]"
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#da3633] bg-[#da3633] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#f85149]"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  Create Branch
-                </button>
-              )}
-
-              {/* Introduce Stress Button - only shown on stresst-test branches */}
-              {isStresstTestBranch && commitDetails && selectedCommit && (
-                <button
-                  onClick={handleIntroduceStress}
-                  disabled={introducingStress || !commitDetails.files?.length}
-                  className="ml-auto inline-flex items-center gap-2 rounded-lg border border-[#da3633] bg-[#da3633] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#f85149] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {introducingStress ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  ) : (
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  )}
-                  {introducingStress 
-                    ? `Stressing ${selectedCommit.author?.login ?? selectedCommit.commit.author.name}...` 
-                    : `Stress this commit`}
+                  Stress this Commit
                 </button>
               )}
             </div>
@@ -619,7 +585,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
             {showCreateBranch && selectedBranch && (
               <form onSubmit={handleCreateBranch} className="flex flex-col gap-3 rounded-lg border border-[#30363d] bg-[#161b22] p-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-white">Create new branch from this commit</label>
+                  <label className="text-sm font-medium text-white">Create stressed branch from this commit</label>
                   <button
                     type="button"
                     onClick={() => {
@@ -633,7 +599,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     </svg>
                   </button>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center rounded-lg border border-[#30363d] bg-[#0d1117]">
                     <span className="whitespace-nowrap border-r border-[#30363d] bg-[#161b22] px-3 py-2 font-mono text-sm text-[#8b949e]">
                       stresst-{selectedBranch}-{timestamp}-
@@ -650,16 +616,16 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                   <button
                     type="submit"
                     disabled={creatingBranch}
-                    className="inline-flex flex-shrink-0 items-center gap-2 rounded-lg bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2ea043] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex flex-shrink-0 items-center gap-2 rounded-lg bg-[#da3633] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#f85149] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {creatingBranch ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                     ) : (
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                     )}
-                    {creatingBranch ? "Creating..." : "Create"}
+                    {creatingBranch ? "Creating & Stressing..." : "Create & Stress"}
                   </button>
                 </div>
 
