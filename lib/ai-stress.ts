@@ -41,14 +41,14 @@ const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
  * @param filename - Name of the file
  * @param context - Optional context about what specific areas to focus bugs on (max 200 chars)
  * @param stressLevel - Stress level: "low", "medium", or "high"
- * @returns Modified content with AI-generated breaking changes and description of changes
+ * @returns Modified content with AI-generated breaking changes, descriptions, and user-facing symptoms
  */
 export async function introduceAIStress(
   content: string,
   filename: string,
   context?: string,
   stressLevel: StressLevel = "medium"
-): Promise<{ content: string; changes: string[] }> {
+): Promise<{ content: string; changes: string[]; symptoms: string[] }> {
   // Dynamic import to handle optional dependency
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let anthropic: any;
@@ -177,8 +177,18 @@ ${content}
 Respond with ONLY a JSON object in this exact format (no markdown, no explanation):
 {
   "modifiedCode": "the complete modified code with bugs introduced",
-  "changes": ["description of bug 1", "description of bug 2", "description of bug 3"]
+  "changes": ["technical description of bug 1", "technical description of bug 2"],
+  "symptoms": ["User-facing symptom 1 - what a QA tester would report", "User-facing symptom 2"]
 }
+
+IMPORTANT about "symptoms": These should be written like bug reports from a confused user or QA tester who doesn't know the code. Examples:
+- "The posts are showing up blank"
+- "When I click submit, nothing happens"
+- "The app crashes when I select an item from the list"
+- "The total price is wrong - it's missing some items"
+- "The page takes forever to load and then shows an error"
+- "Some users' names are showing as 'undefined'"
+Do NOT mention code, variables, functions, or technical details in symptoms. Just describe what's broken from a user's perspective.
 
 The modifiedCode must be the COMPLETE file content with your bugs inserted. Do not truncate or summarize.
 You CAN add new functions, helpers, or code - not just modify existing code. If you add a helper function, make sure to actually USE it somewhere in the existing code so the bug manifests.`;
@@ -204,12 +214,40 @@ You CAN add new functions, helpers, or code - not just modify existing code. If 
     return {
       content: parsed.modifiedCode,
       changes: parsed.changes,
+      symptoms: parsed.symptoms || generateFallbackSymptoms(parsed.changes),
     };
   } catch (error) {
     console.error("AI stress generation failed:", error);
     // Fallback to basic stress if AI fails
     return fallbackStress(content, filename, context, stressLevel);
   }
+}
+
+/**
+ * Generates user-friendly symptom descriptions from technical change descriptions.
+ * Used as a fallback when AI doesn't provide symptoms.
+ * 
+ * @param changes - Array of technical change descriptions
+ * @returns Array of user-friendly symptom descriptions
+ */
+function generateFallbackSymptoms(changes: string[]): string[] {
+  const symptomTemplates = [
+    "Something seems off with how the data is displayed",
+    "The page isn't working correctly",
+    "I'm seeing unexpected behavior when interacting with the UI",
+    "Some items appear to be missing or incorrect",
+    "The app seems slower or unresponsive at times",
+    "Error messages are appearing unexpectedly",
+    "Data doesn't seem to be saving properly",
+    "The calculations appear to be wrong",
+    "Some features aren't responding to clicks",
+    "The list is showing duplicates or missing entries",
+  ];
+  
+  // Pick random symptoms based on number of changes
+  const numSymptoms = Math.min(changes.length, 3);
+  shuffleArray(symptomTemplates);
+  return symptomTemplates.slice(0, numSymptoms);
 }
 
 /**
@@ -247,9 +285,9 @@ interface StressMutation {
  * @param filename - Name of the file being modified
  * @param _context - Optional context (unused in fallback, but accepted for API compatibility)
  * @param stressLevel - Stress level determines number of bugs to apply
- * @returns Modified content and list of changes made
+ * @returns Modified content, list of changes made, and user-facing symptoms
  */
-function fallbackStress(content: string, filename: string, _context?: string, stressLevel: StressLevel = "medium"): { content: string; changes: string[] } {
+function fallbackStress(content: string, filename: string, _context?: string, stressLevel: StressLevel = "medium"): { content: string; changes: string[]; symptoms: string[] } {
   const changes: string[] = [];
   let modifiedContent = content;
   const ext = filename.split(".").pop()?.toLowerCase();
@@ -476,6 +514,6 @@ function fallbackStress(content: string, filename: string, _context?: string, st
     changes.push("No automatic changes could be applied - file may need manual review");
   }
 
-  return { content: modifiedContent, changes };
+  return { content: modifiedContent, changes, symptoms: generateFallbackSymptoms(changes) };
 }
 

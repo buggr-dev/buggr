@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
     const validLevels = ["low", "medium", "high"] as const;
     const stressLevel: "low" | "medium" | "high" = validLevels.includes(difficulty) ? difficulty : "medium";
 
-    const results: { file: string; success: boolean; changes?: string[]; error?: string }[] = [];
+    const results: { file: string; success: boolean; changes?: string[]; symptoms?: string[]; error?: string }[] = [];
+    const allSymptoms: string[] = [];
 
     // Process each file
     for (const filePath of files) {
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
         const decodedContent = Buffer.from(fileContent.content, "base64").toString("utf-8");
 
         // Use AI to introduce subtle stress
-        const { content: modifiedContent, changes } = await introduceAIStress(decodedContent, filePath, stressContext, stressLevel);
+        const { content: modifiedContent, changes, symptoms } = await introduceAIStress(decodedContent, filePath, stressContext, stressLevel);
 
         // Only update if changes were made
         if (changes.length > 0 && modifiedContent !== decodedContent) {
@@ -77,7 +78,8 @@ export async function POST(request: NextRequest) {
             branch
           );
 
-          results.push({ file: filePath, success: true, changes });
+          results.push({ file: filePath, success: true, changes, symptoms });
+          allSymptoms.push(...symptoms);
         } else {
           results.push({ file: filePath, success: false, error: "No changes made" });
         }
@@ -92,9 +94,13 @@ export async function POST(request: NextRequest) {
 
     const successCount = results.filter((r) => r.success).length;
 
+    // Deduplicate symptoms
+    const uniqueSymptoms = [...new Set(allSymptoms)];
+
     return NextResponse.json({
       message: `Stress introduced to ${successCount} of ${files.length} files`,
       results,
+      symptoms: uniqueSymptoms,
     });
   } catch (error) {
     console.error("Error introducing stress:", error);

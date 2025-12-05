@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { GitHubRepo, GitHubBranch, GitHubCommit, GitHubCommitDetails } from "@/lib/github";
+import { useNotes } from "@/app/context/NotesContext";
 
 interface RepoBranchSelectorProps {
   repos: GitHubRepo[];
@@ -16,6 +17,7 @@ interface RepoBranchSelectorProps {
  * @param accessToken - GitHub OAuth access token for fetching data
  */
 export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorProps) {
+  const { addNote } = useNotes();
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [selectedCommit, setSelectedCommit] = useState<GitHubCommit | null>(null);
@@ -37,7 +39,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   const [timestamp, setTimestamp] = useState(() => generateTimestamp());
   
   // Stress result state
-  const [stressResult, setStressResult] = useState<{ message: string; results: { file: string; success: boolean; changes?: string[] }[] } | null>(null);
+  const [stressResult, setStressResult] = useState<{ message: string; results: { file: string; success: boolean; changes?: string[] }[]; symptoms?: string[] } | null>(null);
 
   /**
    * Generates a timestamp string for branch naming (YYYYMMDD-HHMMSS).
@@ -217,6 +219,16 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
         // Both succeeded
         setBranchSuccess(fullBranchName);
         setStressResult(stressData);
+        
+        // Add a bug report note with symptoms
+        if (stressData.symptoms && stressData.symptoms.length > 0) {
+          addNote({
+            title: "🐛 Bug Report Received",
+            messages: stressData.symptoms,
+            branchName: fullBranchName,
+            repoName: selectedRepo.name,
+          });
+        }
       }
 
       setBranchSuffix("");
