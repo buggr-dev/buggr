@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { owner, repo, branch, files } = body;
+    const { owner, repo, branch, files, context } = body;
 
     if (!owner || !repo || !branch || !files || !Array.isArray(files)) {
       return NextResponse.json(
@@ -29,6 +29,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate context length if provided
+    const stressContext = typeof context === "string" ? context.slice(0, 200) : undefined;
 
     const results: { file: string; success: boolean; changes?: string[]; error?: string }[] = [];
 
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest) {
         const decodedContent = Buffer.from(fileContent.content, "base64").toString("utf-8");
 
         // Use AI to introduce subtle stress
-        const { content: modifiedContent, changes } = await introduceAIStress(decodedContent, filePath);
+        const { content: modifiedContent, changes } = await introduceAIStress(decodedContent, filePath, stressContext);
 
         // Only update if changes were made
         if (changes.length > 0 && modifiedContent !== decodedContent) {

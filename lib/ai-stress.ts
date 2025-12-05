@@ -8,11 +8,13 @@ import { generateText } from "ai";
  * 
  * @param content - Original file content
  * @param filename - Name of the file
+ * @param context - Optional context about what specific areas to focus bugs on (max 200 chars)
  * @returns Modified content with AI-generated breaking changes and description of changes
  */
 export async function introduceAIStress(
   content: string,
-  filename: string
+  filename: string,
+  context?: string
 ): Promise<{ content: string; changes: string[] }> {
   // Dynamic import to handle optional dependency
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,16 +25,21 @@ export async function introduceAIStress(
     anthropic = anthropicModule.anthropic;
   } catch {
     console.warn("@ai-sdk/anthropic not installed, using fallback stress");
-    return fallbackStress(content, filename);
+    return fallbackStress(content, filename, context);
   }
 
   // Generate a random seed to encourage variety
   const randomSeed = Math.random().toString(36).substring(2, 15);
   const bugCount = Math.floor(Math.random() * 2) + 2; // 2-3 bugs
   
+  // Build optional focus area instruction
+  const focusInstruction = context 
+    ? `\n\nFOCUS AREA: The user wants to specifically test: "${context}"\nPrioritize bugs related to this focus area when possible, but still be unpredictable.`
+    : "";
+  
   const prompt = `You are a stress engineer tasked with introducing subtle but breaking bugs into code.
   
-IMPORTANT: Be UNPREDICTABLE. Each time you modify code, choose DIFFERENT types of bugs. Do not fall into patterns.
+IMPORTANT: Be UNPREDICTABLE. Each time you modify code, choose DIFFERENT types of bugs. Do not fall into patterns.${focusInstruction}
 
 Your goal is to make changes that:
 1. Will cause the code to fail or behave incorrectly
@@ -106,7 +113,7 @@ The modifiedCode must be the COMPLETE file content with your bugs inserted. Do n
   } catch (error) {
     console.error("AI stress generation failed:", error);
     // Fallback to basic stress if AI fails
-    return fallbackStress(content, filename);
+    return fallbackStress(content, filename, context);
   }
 }
 
@@ -143,9 +150,10 @@ interface StressMutation {
  * 
  * @param content - Original file content
  * @param filename - Name of the file being modified
+ * @param _context - Optional context (unused in fallback, but accepted for API compatibility)
  * @returns Modified content and list of changes made
  */
-function fallbackStress(content: string, filename: string): { content: string; changes: string[] } {
+function fallbackStress(content: string, filename: string, _context?: string): { content: string; changes: string[] } {
   const changes: string[] = [];
   let modifiedContent = content;
   const ext = filename.split(".").pop()?.toLowerCase();

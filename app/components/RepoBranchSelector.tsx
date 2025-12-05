@@ -30,6 +30,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   // Create branch state
   const [showCreateBranch, setShowCreateBranch] = useState(false);
   const [branchSuffix, setBranchSuffix] = useState("");
+  const [stressContext, setStressContext] = useState("");
   const [creatingBranch, setCreatingBranch] = useState(false);
   const [branchSuccess, setBranchSuccess] = useState<string | null>(null);
   const [timestamp, setTimestamp] = useState(() => generateTimestamp());
@@ -200,6 +201,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
           repo: selectedRepo.name,
           branch: fullBranchName,
           files: filesToStress,
+          context: stressContext.trim() || undefined,
         }),
       });
 
@@ -216,6 +218,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
       }
 
       setBranchSuffix("");
+      setStressContext("");
       setShowCreateBranch(false);
       
       // Refresh branches list and switch to the new branch
@@ -591,6 +594,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     onClick={() => {
                       setShowCreateBranch(false);
                       setBranchSuffix("");
+                      setStressContext("");
                     }}
                     className="text-[#8b949e] hover:text-white"
                   >
@@ -632,6 +636,27 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                 <p className="text-xs text-[#8b949e]">
                   Full branch name: <code className="text-[#58a6ff]">{getFullBranchName(branchSuffix)}</code>
                 </p>
+
+                {/* Optional stress context */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-[#8b949e]">
+                    Focus area <span className="text-[#6e7681]">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <textarea
+                      value={stressContext}
+                      onChange={(e) => setStressContext(e.target.value.slice(0, 200))}
+                      placeholder="e.g., Test their understanding of async/await, null handling, or array bounds..."
+                      className="w-full resize-none rounded-lg border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-white placeholder-[#6e7681] focus:border-[#da3633] focus:outline-none focus:ring-1 focus:ring-[#da3633]"
+                      rows={2}
+                      maxLength={200}
+                      disabled={creatingBranch}
+                    />
+                    <span className="absolute bottom-2 right-2 text-xs text-[#6e7681]">
+                      {stressContext.length}/200
+                    </span>
+                  </div>
+                </div>
               </form>
             )}
 
