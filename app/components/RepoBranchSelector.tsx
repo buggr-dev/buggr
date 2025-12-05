@@ -39,6 +39,8 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   const [loadingStep, setLoadingStep] = useState<number>(0);
   const [branchSuccess, setBranchSuccess] = useState<string | null>(null);
   const [timestamp, setTimestamp] = useState(() => generateTimestamp());
+  const [deletingBranch, setDeletingBranch] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Loading steps for the stress process
   const loadingSteps = [
@@ -277,6 +279,58 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   }
 
   /**
+   * Deletes the currently selected branch.
+   */
+  async function handleDeleteBranch() {
+    if (!selectedRepo || !selectedBranch) return;
+
+    // Prevent deletion of protected branches
+    const protectedBranches = ["main", "master", "develop", "dev"];
+    if (protectedBranches.includes(selectedBranch.toLowerCase())) {
+      setError("Cannot delete protected branches");
+      return;
+    }
+
+    setDeletingBranch(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/github/branch/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner: selectedRepo.owner.login,
+          repo: selectedRepo.name,
+          branchName: selectedBranch,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete branch");
+      }
+
+      // Refresh branches list
+      const branchesResponse = await fetch(`/api/github/branches?owner=${selectedRepo.owner.login}&repo=${selectedRepo.name}`);
+      if (branchesResponse.ok) {
+        const branchesData = await branchesResponse.json();
+        setBranches(branchesData);
+      }
+
+      // Clear selection
+      setSelectedBranch(null);
+      setSelectedCommit(null);
+      setCommitDetails(null);
+      setCommits([]);
+      setShowDeleteConfirm(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete branch");
+    } finally {
+      setDeletingBranch(false);
+    }
+  }
+
+  /**
    * Formats a date string to a relative time (e.g., "2 hours ago").
    */
   function formatRelativeTime(dateString: string): string {
@@ -412,9 +466,46 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
         {/* Commits List */}
         {selectedBranch && (
           <div className="mt-6 flex min-h-0 flex-1 flex-col">
-            <h3 className="mb-3 text-sm font-medium text-[#8b949e]">
-              Recent commits on <span className="font-mono text-white">{selectedBranch}</span>
-            </h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-medium text-[#8b949e]">
+                Recent commits on <span className="font-mono text-white">{selectedBranch}</span>
+              </h3>
+              
+              {/* Delete branch button - only for stresst branches */}
+              {selectedBranch.startsWith("stresst-") && (
+                <div className="relative">
+                  {showDeleteConfirm ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[#f85149]">Delete branch?</span>
+                      <button
+                        onClick={handleDeleteBranch}
+                        disabled={deletingBranch}
+                        className="rounded px-2 py-1 text-xs font-medium text-white bg-[#da3633] hover:bg-[#f85149] disabled:opacity-50"
+                      >
+                        {deletingBranch ? "Deleting..." : "Yes"}
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="rounded px-2 py-1 text-xs text-[#8b949e] hover:text-white"
+                      >
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="flex items-center gap-1 rounded px-2 py-1 text-xs text-[#8b949e] transition-colors hover:bg-[#da3633]/20 hover:text-[#f85149]"
+                      title="Delete this branch"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
             {loadingCommits ? (
               <div className="flex flex-1 items-center justify-center">

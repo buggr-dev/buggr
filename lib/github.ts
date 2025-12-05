@@ -211,6 +211,38 @@ export async function createBranch(
   return response.json();
 }
 
+/**
+ * Deletes a branch from a repository.
+ * 
+ * @param accessToken - GitHub OAuth access token
+ * @param owner - Repository owner (username or org)
+ * @param repo - Repository name
+ * @param branchName - Name of the branch to delete
+ * @returns void
+ */
+export async function deleteBranch(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  branchName: string
+): Promise<void> {
+  const response = await fetch(
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/refs/heads/${encodeURIComponent(branchName)}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to delete branch: ${response.statusText}`);
+  }
+}
+
 export interface GitHubFileContent {
   name: string;
   path: string;
