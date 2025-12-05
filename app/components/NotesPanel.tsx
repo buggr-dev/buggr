@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/app/context/NotesContext";
+import { Button } from "@/app/components/inputs/Button";
 
 /**
  * Notes toggle button component for use in headers/navbars.
@@ -13,7 +14,7 @@ export function NotesButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-[#30363d] bg-[#161b22] text-[#8b949e] transition-colors hover:border-[#8b949e] hover:text-white"
+      className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle text-gh-text-muted transition-colors hover:border-gh-text-muted hover:text-white"
       title="Bug Reports"
     >
       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,7 +26,7 @@ export function NotesButton({ onClick }: { onClick: () => void }) {
         />
       </svg>
       {unreadCount > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#da3633] text-[10px] font-bold text-white">
+        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-gh-danger text-[10px] font-bold text-white">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}
@@ -124,14 +125,14 @@ export function NotesPanel() {
 
       {/* Notes Panel */}
       <div
-        className={`fixed right-0 top-0 z-[9999] h-full w-96 transform border-l border-[#30363d] bg-[#0d1117] shadow-2xl transition-transform duration-300 ${
+        className={`fixed right-0 top-0 z-[9999] h-full w-96 transform border-l border-gh-border bg-gh-canvas shadow-2xl transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#30363d] px-4 py-4">
+        <div className="flex items-center justify-between border-b border-gh-border px-4 py-4">
           <div className="flex items-center gap-2">
-            <svg className="h-5 w-5 text-[#da3633]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5 text-gh-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -141,38 +142,40 @@ export function NotesPanel() {
             </svg>
             <h2 className="text-lg font-semibold text-white">Bug Reports</h2>
             {unreadCount > 0 && (
-              <span className="rounded-full bg-[#da3633]/20 px-2 py-0.5 text-xs text-[#f85149]">
+              <span className="rounded-full bg-gh-danger/20 px-2 py-0.5 text-xs text-gh-danger-fg">
                 {unreadCount} new
               </span>
             )}
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setIsOpen(false)}
-            className="text-[#8b949e] hover:text-white"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         {/* Actions */}
         {notes.length > 0 && (
-          <div className="flex items-center justify-end gap-2 border-b border-[#30363d] px-4 py-2">
+          <div className="flex items-center justify-end gap-2 border-b border-gh-border px-4 py-2">
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs text-[#58a6ff] hover:underline"
+                className="text-xs text-gh-accent hover:underline"
               >
                 Mark all as read
               </button>
             )}
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={clearNotes}
-              className="text-xs text-[#8b949e] hover:text-white"
             >
               Clear all
-            </button>
+            </Button>
           </div>
         )}
 
@@ -180,8 +183,8 @@ export function NotesPanel() {
         <div className="h-[calc(100%-8rem)] overflow-y-auto">
           {notes.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[#30363d] bg-[#161b22]">
-                <svg className="h-8 w-8 text-[#8b949e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-gh-border bg-gh-canvas-subtle">
+                <svg className="h-8 w-8 text-gh-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -192,7 +195,7 @@ export function NotesPanel() {
               </div>
               <div>
                 <p className="text-sm font-medium text-white">No bug reports yet</p>
-                <p className="text-xs text-[#8b949e]">Stress a branch to see reports here</p>
+                <p className="text-xs text-gh-text-muted">Stress a branch to see reports here</p>
               </div>
             </div>
           ) : (
@@ -204,19 +207,19 @@ export function NotesPanel() {
                   <div
                     key={note.id}
                     onClick={() => markAsRead(note.id)}
-                    className={`cursor-pointer border-b border-[#30363d] p-4 transition-colors hover:bg-[#161b22] ${
-                      !note.read ? "bg-[#da3633]/5" : ""
+                    className={`cursor-pointer border-b border-gh-border p-4 transition-colors hover:bg-gh-canvas-subtle ${
+                      !note.read ? "bg-gh-danger/5" : ""
                     }`}
                   >
                     {/* Note Header */}
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
                         {!note.read && (
-                          <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[#da3633]" />
+                          <span className="h-2 w-2 flex-shrink-0 rounded-full bg-gh-danger" />
                         )}
                         <h3 className="text-sm font-medium text-white">{note.title}</h3>
                       </div>
-                      <span className="flex-shrink-0 text-xs text-[#8b949e]">
+                      <span className="flex-shrink-0 text-xs text-gh-text-muted">
                         {formatRelativeTime(note.timestamp)}
                       </span>
                     </div>
@@ -230,7 +233,7 @@ export function NotesPanel() {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-[#30363d] bg-[#161b22] px-2 py-1 text-xs text-[#58a6ff] transition-colors hover:border-[#58a6ff] hover:bg-[#58a6ff]/10"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-gh-border bg-gh-canvas-subtle px-2 py-1 text-xs text-gh-accent transition-colors hover:border-gh-accent hover:bg-gh-accent/10"
                           >
                             <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
                               <path
@@ -245,7 +248,7 @@ export function NotesPanel() {
                             </svg>
                           </a>
                         ) : (
-                          <div className="flex items-center gap-2 text-xs text-[#8b949e]">
+                          <div className="flex items-center gap-2 text-xs text-gh-text-muted">
                             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path
                                 strokeLinecap="round"
@@ -254,7 +257,7 @@ export function NotesPanel() {
                                 d="M13 10V3L4 14h7v7l9-11h-7z"
                               />
                             </svg>
-                            <code className="rounded bg-[#30363d] px-1.5 py-0.5 font-mono">
+                            <code className="rounded bg-gh-border px-1.5 py-0.5 font-mono">
                               {note.repoName && `${note.repoName}/`}
                               {note.branchName}
                             </code>
@@ -266,8 +269,8 @@ export function NotesPanel() {
                     {/* Messages */}
                     <ul className="space-y-1.5">
                       {note.messages.map((message, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-[#c9d1d9]">
-                          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#f85149]" />
+                        <li key={index} className="flex items-start gap-2 text-sm text-gh-text">
+                          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gh-danger-fg" />
                           {message}
                         </li>
                       ))}
@@ -282,8 +285,8 @@ export function NotesPanel() {
                         }}
                         className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
                           copiedId === note.id
-                            ? "bg-[#238636]/20 text-[#3fb950]"
-                            : "text-[#8b949e] hover:bg-[#30363d] hover:text-white"
+                            ? "bg-gh-success/20 text-gh-success-fg"
+                            : "text-gh-text-muted hover:bg-gh-border hover:text-white"
                         }`}
                       >
                         {copiedId === note.id ? (

@@ -4,6 +4,8 @@ import { useState } from "react";
 import type { GitHubRepo, GitHubBranch, GitHubCommit, GitHubCommitDetails } from "@/lib/github";
 import { useNotes } from "@/app/context/NotesContext";
 import { NotesPanel } from "@/app/components/NotesPanel";
+import { Select } from "@/app/components/inputs/Select";
+import { Button } from "@/app/components/inputs/Button";
 
 interface RepoBranchSelectorProps {
   repos: GitHubRepo[];
@@ -406,62 +408,45 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
         {/* Selectors */}
         <div className="flex flex-col gap-4">
           {/* Repository Selector */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gh-text-muted">Repository</label>
-            <div className="relative">
-              <select
-                className="w-full appearance-none rounded-lg border border-gh-border bg-gh-canvas-subtle px-4 py-2.5 pr-10 text-sm text-white transition-colors focus:border-gh-success focus:outline-none focus:ring-1 focus:ring-gh-success"
-                value={selectedRepo?.id ?? ""}
-                onChange={(e) => {
-                  const repo = repos.find((r) => r.id === Number(e.target.value));
-                  if (repo) handleRepoSelect(repo);
-                }}>
-                <option value="">Choose a repository...</option>
-                {repos.map((repo) => (
-                  <option key={repo.id} value={repo.id}>
-                    {repo.full_name} {repo.private ? "🔒" : ""}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg className="h-4 w-4 text-gh-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
+          <Select
+            label="Repository"
+            value={selectedRepo?.id ?? ""}
+            onChange={(e) => {
+              const repo = repos.find((r) => r.id === Number(e.target.value));
+              if (repo) handleRepoSelect(repo);
+            }}
+            placeholder="Choose a repository..."
+            options={repos.map((repo) => ({
+              value: repo.id,
+              label: `${repo.full_name}${repo.private ? " 🔒" : ""}`,
+            }))}
+          />
 
           {/* Branch Selector */}
           {selectedRepo && (
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gh-text-muted">Branch</label>
+            <>
               {loadingBranches ? (
-                <div className="flex items-center justify-center py-3">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gh-border border-t-gh-success" />
-                </div>
-              ) : (
-                <div className="relative">
-                  <select
-                    className="w-full appearance-none rounded-lg border border-gh-border bg-gh-canvas-subtle px-4 py-2.5 pr-10 text-sm text-white transition-colors focus:border-gh-success focus:outline-none focus:ring-1 focus:ring-gh-success"
-                    value={selectedBranch ?? ""}
-                    onChange={(e) => {
-                      if (e.target.value) handleBranchSelect(e.target.value);
-                    }}>
-                    <option value="">Choose a branch...</option>
-                    {branches.map((branch) => (
-                      <option key={branch.name} value={branch.name}>
-                        {branch.name} {branch.protected ? "🔒" : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                    <svg className="h-4 w-4 text-gh-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gh-text-muted">Branch</label>
+                  <div className="flex items-center justify-center py-3">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gh-border border-t-gh-success" />
                   </div>
                 </div>
+              ) : (
+                <Select
+                  label="Branch"
+                  value={selectedBranch ?? ""}
+                  onChange={(e) => {
+                    if (e.target.value) handleBranchSelect(e.target.value);
+                  }}
+                  placeholder="Choose a branch..."
+                  options={branches.map((branch) => ({
+                    value: branch.name,
+                    label: `${branch.name}${branch.protected ? " 🔒" : ""}`,
+                  }))}
+                />
               )}
-            </div>
+            </>
           )}
         </div>
 
@@ -482,19 +467,21 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                   {showDeleteConfirm ? (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gh-danger-fg">Delete branch?</span>
-                      <button
+                      <Button
+                        variant="danger"
+                        size="sm"
                         onClick={handleDeleteBranch}
                         disabled={deletingBranch}
-                        className="rounded px-2 py-1 text-xs font-medium text-white bg-gh-danger hover:bg-gh-danger-emphasis disabled:opacity-50"
                       >
                         {deletingBranch ? "Deleting..." : "Yes"}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="rounded px-2 py-1 text-xs text-gh-text-muted hover:text-white"
                       >
                         No
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <button
@@ -670,18 +657,18 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
 
               {/* Create Branch & Stress Button */}
               {!showCreateBranch && (
-                <button
+                <Button
+                  variant="danger"
                   onClick={() => {
                     setShowCreateBranch(true);
                     setTimestamp(generateTimestamp());
                   }}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gh-danger bg-gh-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gh-danger-emphasis"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   Stress out this commit
-                </button>
+                </Button>
               )}
             </div>
 
@@ -695,14 +682,15 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     </svg>
                     {selectedCommit.author?.login ?? selectedCommit.commit.author.name}'s commit is now stressed! 😈
                   </h4>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setStressResult(null)}
-                    className="text-gh-text-muted hover:text-white"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </Button>
                 </div>
                 <p className="mb-2 text-sm text-gh-danger-fg">{stressResult.message}</p>
                 <div className="space-y-2">
@@ -727,20 +715,21 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
               <form onSubmit={handleCreateBranch} className="flex flex-col gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-4">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-white">Create stressed branch from this commit</label>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => {
                       setShowCreateBranch(false);
                       setBranchSuffix("");
                       setStressContext("");
                       setStressLevel("medium");
                     }}
-                    className="text-gh-text-muted hover:text-white"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </Button>
                 </div>
                 <div className="flex items-center rounded-lg border border-gh-border bg-gh-canvas">
                   <span className="whitespace-nowrap border-r border-gh-border bg-gh-canvas-subtle px-3 py-2 font-mono text-sm text-gh-text-muted">
@@ -895,15 +884,17 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     </div>
                   </div>
                 ) : (
-                  <button
+                  <Button
                     type="submit"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gh-danger px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gh-danger-emphasis"
+                    variant="danger"
+                    size="lg"
+                    fullWidth
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     Create & Stress
-                  </button>
+                  </Button>
                 )}
               </form>
             )}
@@ -918,30 +909,32 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     </svg>
                     <span className="text-sm font-medium">Branch created successfully!</span>
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setBranchSuccess(null)}
-                    className="text-gh-text-muted hover:text-white"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </Button>
                 </div>
                 <p className="mb-3 text-xs text-gh-text-muted">
                   <code className="rounded bg-gh-border px-1.5 py-0.5 font-mono text-gh-success-fg">{branchSuccess}</code>
                 </p>
-                <button
+                <Button
+                  variant="primary"
+                  fullWidth
                   onClick={() => {
                     handleBranchSelect(branchSuccess);
                     setBranchSuccess(null);
                   }}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gh-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gh-success-emphasis"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                   Show Stressed Branch
-                </button>
+                </Button>
               </div>
             )}
           </div>
