@@ -4,7 +4,8 @@ import { fetchFileContent, updateFile } from "@/lib/github";
 import { introduceAIStress } from "@/lib/ai-stress";
 
 // Maximum file size in lines to process (keeps token usage reasonable)
-const MAX_FILE_LINES = 2000;
+const MAX_FILE_LINES_SINGLE = 5000; // If only 1 file, allow up to 5000 lines
+const MAX_FILE_LINES_MULTIPLE = 2000; // If multiple files, limit to 2000 lines per file
 
 /**
  * POST /api/github/stress
@@ -12,7 +13,9 @@ const MAX_FILE_LINES = 2000;
  * Uses AI to introduce subtle breaking changes to files that were modified in a commit.
  * Requires owner, repo, branch, and files (array of file paths) in the request body.
  * 
- * Files exceeding MAX_FILE_LINES are skipped to keep token usage reasonable.
+ * Files exceeding the line limit are skipped to keep token usage reasonable.
+ * If only one valid file is being processed, it can be up to 5000 lines.
+ * If multiple files are being processed, each is limited to 2000 lines.
  */
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -45,6 +48,15 @@ export async function POST(request: NextRequest) {
     const results: { file: string; success: boolean; changes?: string[]; symptoms?: string[]; error?: string }[] = [];
     const allSymptoms: string[] = [];
 
+    // Count valid code files to determine line limit
+    const validCodeFiles = files.filter((filePath) => {
+      const ext = filePath.split(".").pop()?.toLowerCase();
+      return ["ts", "tsx", "js", "jsx", "py", "java", "go", "rs", "c", "cpp", "h", "cs"].includes(ext || "");
+    });
+    
+    // If only one valid file, allow up to 5000 lines; otherwise limit to 2000 per file
+    const maxFileLines = validCodeFiles.length === 1 ? MAX_FILE_LINES_SINGLE : MAX_FILE_LINES_MULTIPLE;
+
     // Process each file
     for (const filePath of files) {
       try {
@@ -69,11 +81,11 @@ export async function POST(request: NextRequest) {
 
         // Skip files that are too large (keeps token usage reasonable)
         const lineCount = decodedContent.split("\n").length;
-        if (lineCount > MAX_FILE_LINES) {
+        if (lineCount > maxFileLines) {
           results.push({ 
             file: filePath, 
             success: false, 
-            error: `Skipped: file too large (${lineCount} lines, max ${MAX_FILE_LINES})` 
+            error: `Skipped: file too large (${lineCount} lines, max ${maxFileLines})` 
           });
           continue;
         }
