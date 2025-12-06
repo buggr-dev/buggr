@@ -3,11 +3,16 @@ import { auth } from "@/auth";
 import { fetchFileContent, updateFile } from "@/lib/github";
 import { introduceAIStress } from "@/lib/ai-stress";
 
+// Maximum file size in lines to process (keeps token usage reasonable)
+const MAX_FILE_LINES = 2000;
+
 /**
  * POST /api/github/stress
  * 
  * Uses AI to introduce subtle breaking changes to files that were modified in a commit.
  * Requires owner, repo, branch, and files (array of file paths) in the request body.
+ * 
+ * Files exceeding MAX_FILE_LINES are skipped to keep token usage reasonable.
  */
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -61,6 +66,17 @@ export async function POST(request: NextRequest) {
 
         // Decode the content (it's base64 encoded)
         const decodedContent = Buffer.from(fileContent.content, "base64").toString("utf-8");
+
+        // Skip files that are too large (keeps token usage reasonable)
+        const lineCount = decodedContent.split("\n").length;
+        if (lineCount > MAX_FILE_LINES) {
+          results.push({ 
+            file: filePath, 
+            success: false, 
+            error: `Skipped: file too large (${lineCount} lines, max ${MAX_FILE_LINES})` 
+          });
+          continue;
+        }
 
         // Use AI to introduce subtle stress
         const { content: modifiedContent, changes, symptoms } = await introduceAIStress(decodedContent, filePath, stressContext, stressLevel);

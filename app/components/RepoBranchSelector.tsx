@@ -186,8 +186,13 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
     const base = `stresst-${selectedBranch}-${timestamp}`;
     const fullBranchName = branchSuffix.trim() ? `${base}-${branchSuffix.trim()}` : base;
 
+    // Filter out removed files, sort by most changes, and limit to top 3
+    // This keeps token usage reasonable while targeting the most impactful files
+    const MAX_FILES_TO_STRESS = 3;
     const filesToStress = commitDetails.files
       .filter((f) => f.status !== "removed")
+      .sort((a, b) => (b.additions + b.deletions) - (a.additions + a.deletions))
+      .slice(0, MAX_FILES_TO_STRESS)
       .map((f) => f.filename);
 
     if (filesToStress.length === 0) {
