@@ -58,6 +58,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
   const [timestamp, setTimestamp] = useState(() => generateTimestamp());
   const [deletingBranch, setDeletingBranch] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [copiedBranchLink, setCopiedBranchLink] = useState(false);
 
   // Stress result state
   const [stressResult, setStressResult] = useState<{
@@ -356,6 +357,24 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
     });
   }
 
+  /**
+   * Copies the branch link to clipboard.
+   */
+  async function handleCopyBranchLink() {
+    if (!selectedRepo || !selectedBranch) return;
+
+    const branchUrl = `https://github.com/${selectedRepo.owner.login}/${selectedRepo.name}/tree/${encodeURIComponent(selectedBranch)}`;
+
+    try {
+      await navigator.clipboard.writeText(branchUrl);
+      setCopiedBranchLink(true);
+      setTimeout(() => setCopiedBranchLink(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy branch link:", err);
+      setError("Failed to copy branch link");
+    }
+  }
+
   return (
     <div className="flex h-screen w-full">
       {/* Left Panel - Selection & Commits */}
@@ -435,8 +454,8 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                 Recent commits on <span className="font-mono text-white">{selectedBranch}</span>
               </h3>
 
-              {selectedBranch.startsWith("stresst-") && (
-                <div className="relative">
+              {selectedBranch.includes("stresst-test-") && (
+                <div className="flex items-center gap-2">
                   {showDeleteConfirm ? (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gh-danger-fg">Delete branch?</span>
@@ -453,26 +472,70 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                       </Button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="flex items-center gap-1 rounded px-2 py-1 text-xs text-gh-text-muted transition-colors hover:bg-gh-danger/20 hover:text-gh-danger-fg"
-                      title="Delete this branch"
-                    >
-                      <svg
-                        className="h-3.5 w-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopyBranchLink}
+                        title="Copy branch link to share"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                      Delete
-                    </button>
+                        {copiedBranchLink ? (
+                          <>
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
+                            </svg>
+                            Copy link
+                          </>
+                        )}
+                      </Button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="flex items-center gap-1 rounded px-2 py-1 text-xs text-gh-text-muted transition-colors hover:bg-gh-danger/20 hover:text-gh-danger-fg"
+                        title="Delete this branch"
+                      >
+                        <svg
+                          className="h-3.5 w-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                        Delete
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -590,6 +653,50 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                     />
                   </svg>
                 </a>
+              )}
+
+              {selectedBranch && selectedBranch.includes("stresst-test-") && !showCreateBranch && (
+                <Button
+                  variant="secondary"
+                  onClick={handleCopyBranchLink}
+                  title="Copy branch link to share"
+                >
+                  {copiedBranchLink ? (
+                    <>
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
+                      Copy branch link
+                    </>
+                  )}
+                </Button>
               )}
 
               {!showCreateBranch && (
