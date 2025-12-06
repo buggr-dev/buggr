@@ -3,14 +3,9 @@
 import { Button } from "@/app/components/inputs/Button";
 import { Card } from "@/app/components/Card";
 import { StressLevelSelector } from "./StressLevelSelector";
-import { LoadingProgress } from "./LoadingProgress";
+import { LoadingProgress, type LoadingStep } from "./LoadingProgress";
 
 type StressLevel = "low" | "medium" | "high";
-
-interface LoadingStep {
-  label: string;
-  icon?: string;
-}
 
 interface CreateBranchFormProps {
   /**

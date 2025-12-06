@@ -20,11 +20,11 @@ interface RepoBranchSelectorProps {
 
 // Loading steps for the stress process
 const LOADING_STEPS = [
-  { label: "Creating branch", icon: "branch" },
-  { label: "Analyzing files", icon: "search" },
-  { label: "Stressing out your code", icon: "stress" },
-  { label: "Committing changes", icon: "commit" },
-  { label: "Finalizing", icon: "check" },
+  { label: "Creating branch", icon: "branch", timeEstimate: "5-30s" },
+  { label: "Analyzing files", icon: "search", timeEstimate: "5-30s" },
+  { label: "Stressing out your code", icon: "stress", timeEstimate: "1-2 min" },
+  { label: "Committing changes", icon: "commit", timeEstimate: "5-30s" },
+  { label: "Finalizing", icon: "check", timeEstimate: "5-30s" },
 ];
 
 /**

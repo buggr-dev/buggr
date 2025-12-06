@@ -2,9 +2,10 @@
 
 import { Card } from "@/app/components/Card";
 
-interface LoadingStep {
+export interface LoadingStep {
   label: string;
   icon?: string;
+  timeEstimate?: string;
 }
 
 interface LoadingProgressProps {
@@ -41,7 +42,7 @@ export function LoadingProgress({ steps, currentStep, title, subtitle }: Loading
     <Card variant="inset">
       {/* Progress header */}
       <div className="mb-4 flex items-center gap-3">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gh-border border-t-gh-danger" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gh-border border-t-gh-accent" />
         <div>
           <p className="text-sm font-medium text-white">{title || currentLabel}</p>
           <p className="text-xs text-gh-text-muted">{subtitle || "This may take a moment"}</p>
@@ -63,7 +64,7 @@ export function LoadingProgress({ steps, currentStep, title, subtitle }: Loading
                   isComplete
                     ? "bg-gh-success text-white"
                     : isCurrent
-                      ? "animate-pulse bg-gh-danger text-white"
+                      ? "animate-pulse bg-gh-accent text-white"
                       : "bg-gh-border text-gh-text-muted"
                 }`}
               >
@@ -78,7 +79,7 @@ export function LoadingProgress({ steps, currentStep, title, subtitle }: Loading
 
               {/* Step label */}
               <span
-                className={`text-sm transition-colors ${
+                className={`flex-1 text-sm transition-colors ${
                   isComplete
                     ? "text-gh-success-fg"
                     : isCurrent
@@ -89,6 +90,11 @@ export function LoadingProgress({ steps, currentStep, title, subtitle }: Loading
                 {step.label}
                 {isCurrent && <span className="ml-1.5 inline-block animate-pulse">...</span>}
               </span>
+
+              {/* Time estimate */}
+              {step.timeEstimate && (
+                <span className="text-xs text-gh-text-subtle">{step.timeEstimate}</span>
+              )}
             </div>
           );
         })}
@@ -97,7 +103,7 @@ export function LoadingProgress({ steps, currentStep, title, subtitle }: Loading
       {/* Progress bar */}
       <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-gh-border">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-gh-danger to-gh-danger-emphasis transition-all duration-500"
+          className="h-full rounded-full bg-gradient-to-r from-gh-accent to-gh-accent/80 transition-all duration-500"
           style={{ width: `${(currentStep / steps.length) * 100}%` }}
         />
       </div>
