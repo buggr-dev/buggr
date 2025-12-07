@@ -45,6 +45,15 @@ export async function POST(request: NextRequest) {
     const validLevels = ["low", "medium", "high"] as const;
     const stressLevel: "low" | "medium" | "high" = validLevels.includes(difficulty) ? difficulty : "medium";
 
+    // Calculate total bug count based on stress level (TOTAL across all files, not per file)
+    const STRESS_CONFIGS = {
+      low: { bugCountMin: 1, bugCountMax: 2 },
+      medium: { bugCountMin: 2, bugCountMax: 3 },
+      high: { bugCountMin: 2, bugCountMax: 3 },
+    };
+    const config = STRESS_CONFIGS[stressLevel];
+    const totalBugCount = Math.floor(Math.random() * (config.bugCountMax - config.bugCountMin + 1)) + config.bugCountMin;
+
     const results: { file: string; success: boolean; changes?: string[]; symptoms?: string[]; error?: string }[] = [];
     const allSymptoms: string[] = [];
 
@@ -57,7 +66,14 @@ export async function POST(request: NextRequest) {
     // If only one valid file, allow up to 5000 lines; otherwise limit to 2000 per file
     const maxFileLines = validCodeFiles.length === 1 ? MAX_FILE_LINES_SINGLE : MAX_FILE_LINES_MULTIPLE;
 
-    // Process each file
+    // First, collect all valid files that we can process (fetch content and check size)
+    interface ProcessableFile {
+      filePath: string;
+      content: string;
+      sha: string;
+    }
+    const processableFiles: ProcessableFile[] = [];
+
     for (const filePath of files) {
       try {
         // Skip non-code files
@@ -90,8 +106,46 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        processableFiles.push({
+          filePath,
+          content: decodedContent,
+          sha: fileContent.sha,
+        });
+      } catch (error) {
+        results.push({
+          file: filePath,
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }
+
+    // Distribute bugs across processable files
+    // Simple distribution: randomly assign bugs to files, ensuring all bugs are used
+    const bugDistribution: number[] = new Array(processableFiles.length).fill(0);
+    let remainingBugs = totalBugCount;
+    
+    // Distribute bugs randomly across files
+    while (remainingBugs > 0 && processableFiles.length > 0) {
+      const randomFileIndex = Math.floor(Math.random() * processableFiles.length);
+      bugDistribution[randomFileIndex]++;
+      remainingBugs--;
+    }
+
+    // Process each file with its assigned bug count
+    for (let i = 0; i < processableFiles.length; i++) {
+      const { filePath, content: decodedContent, sha } = processableFiles[i];
+      const bugsForThisFile = bugDistribution[i];
+      
+      try {
         // Use AI to introduce subtle stress
-        const { content: modifiedContent, changes, symptoms } = await introduceAIStress(decodedContent, filePath, stressContext, stressLevel);
+        const { content: modifiedContent, changes, symptoms } = await introduceAIStress(
+          decodedContent, 
+          filePath, 
+          stressContext, 
+          stressLevel,
+          bugsForThisFile > 0 ? bugsForThisFile : undefined
+        );
 
         // Only update if changes were made
         if (changes.length > 0 && modifiedContent !== decodedContent) {
@@ -102,7 +156,7 @@ export async function POST(request: NextRequest) {
             filePath,
             modifiedContent,
             `🔥 ${filePath} is stressed out`,
-            fileContent.sha,
+            sha,
             branch
           );
 

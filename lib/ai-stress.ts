@@ -41,13 +41,15 @@ const STRESS_CONFIGS: Record<StressLevel, StressConfig> = {
  * @param filename - Name of the file
  * @param context - Optional context about what specific areas to focus bugs on (max 200 chars)
  * @param stressLevel - Stress level: "low", "medium", or "high"
+ * @param targetBugCount - Optional specific number of bugs to introduce (overrides stress level bug count)
  * @returns Modified content with AI-generated breaking changes, descriptions, and user-facing symptoms
  */
 export async function introduceAIStress(
   content: string,
   filename: string,
   context?: string,
-  stressLevel: StressLevel = "medium"
+  stressLevel: StressLevel = "medium",
+  targetBugCount?: number
 ): Promise<{ content: string; changes: string[]; symptoms: string[] }> {
   // Dynamic import to handle optional dependency
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,7 +66,10 @@ export async function introduceAIStress(
 
   // Generate a random seed to encourage variety
   const randomSeed = Math.random().toString(36).substring(2, 15);
-  const bugCount = Math.floor(Math.random() * (config.bugCountMax - config.bugCountMin + 1)) + config.bugCountMin;
+  // Use targetBugCount if provided, otherwise calculate from stress level config
+  const bugCount = targetBugCount !== undefined 
+    ? targetBugCount 
+    : Math.floor(Math.random() * (config.bugCountMax - config.bugCountMin + 1)) + config.bugCountMin;
   
   // Build optional focus area instruction
   const focusInstruction = context 
@@ -219,7 +224,7 @@ You CAN add new functions, helpers, or code - not just modify existing code. If 
   } catch (error) {
     console.error("AI stress generation failed:", error);
     // Fallback to basic stress if AI fails
-    return fallbackStress(content, filename, context, stressLevel);
+    return fallbackStress(content, filename, context, stressLevel, targetBugCount);
   }
 }
 
@@ -285,9 +290,10 @@ interface StressMutation {
  * @param filename - Name of the file being modified
  * @param _context - Optional context (unused in fallback, but accepted for API compatibility)
  * @param stressLevel - Stress level determines number of bugs to apply
+ * @param targetBugCount - Optional specific number of bugs to introduce (overrides stress level bug count)
  * @returns Modified content, list of changes made, and user-facing symptoms
  */
-function fallbackStress(content: string, filename: string, _context?: string, stressLevel: StressLevel = "medium"): { content: string; changes: string[]; symptoms: string[] } {
+function fallbackStress(content: string, filename: string, _context?: string, stressLevel: StressLevel = "medium", targetBugCount?: number): { content: string; changes: string[]; symptoms: string[] } {
   const changes: string[] = [];
   let modifiedContent = content;
   const ext = filename.split(".").pop()?.toLowerCase();
@@ -494,10 +500,13 @@ function fallbackStress(content: string, filename: string, _context?: string, st
 
   // Shuffle and pick random mutations based on difficulty
   shuffleArray(applicableMutations);
-  const targetBugCount = Math.floor(Math.random() * (config.bugCountMax - config.bugCountMin + 1)) + config.bugCountMin;
+  // Use targetBugCount if provided, otherwise calculate from stress level config
+  const bugCount = targetBugCount !== undefined 
+    ? targetBugCount 
+    : Math.floor(Math.random() * (config.bugCountMax - config.bugCountMin + 1)) + config.bugCountMin;
   
   for (const mutation of applicableMutations) {
-    if (changes.length >= targetBugCount) break;
+    if (changes.length >= bugCount) break;
     
     // Double-check mutation can still be applied (content may have changed)
     if (mutation.canApply(modifiedContent)) {
