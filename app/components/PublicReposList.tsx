@@ -46,7 +46,7 @@ function getLanguageColor(language: string): string {
  */
 export function PublicReposList({ onFork }: PublicReposListProps) {
   return (
-    <div className="mt-6 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <div className="h-px flex-1 bg-gh-border" />
         <span className="text-xs font-medium text-gh-text-muted">or fork one of our public repos</span>

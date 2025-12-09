@@ -552,6 +552,30 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
           )}
         </div>
 
+        {/* Clear Selection Button */}
+        {selectedRepo && (
+          <button
+            onClick={() => {
+              setSelectedRepo(null);
+              setSelectedBranch(null);
+              setSelectedCommit(null);
+              setCommitDetails(null);
+              setBranches([]);
+              setCommits([]);
+              setBranchSuccess(null);
+              setStressResult(null);
+              setShowCreateBranch(false);
+            }}
+            className="mt-2 flex items-center gap-1 self-start rounded px-2 py-1.5 text-xs text-gh-text-muted transition-colors hover:bg-gh-canvas-subtle hover:text-white"
+            title="Clear selection"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear selection
+          </button>
+        )}
+
         {/* Public Repos Section - only show when no branch selected */}
         {!selectedBranch && <PublicReposList />}
 
@@ -564,7 +588,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
 
         {/* Commits List */}
         {selectedBranch && (
-          <div className="mt-6 flex min-h-0 flex-1 flex-col">
+          <div className="mt-4 flex min-h-0 flex-1 flex-col">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-medium text-gh-text-muted">
                 Recent commits on <span className="font-mono text-white">{selectedBranch}</span>
