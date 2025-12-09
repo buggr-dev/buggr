@@ -552,8 +552,8 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
           )}
         </div>
 
-        {/* Public Repos Section */}
-        <PublicReposList />
+        {/* Public Repos Section - only show when no branch selected */}
+        {!selectedBranch && <PublicReposList />}
 
         {/* Error Display */}
         {error && (
