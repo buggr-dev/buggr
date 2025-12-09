@@ -496,84 +496,87 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
                       label: `${branch.name}${branch.protected ? " 🔒" : ""}`,
                     }))}
                   />
-                  {branches.some((b) => b.name.includes("stresst-")) && (
-                    <div className="flex items-center justify-end">
-                      {showDeleteAllConfirm ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gh-danger-fg">
-                            Delete all {branches.filter((b) => b.name.includes("stresst-")).length} stressed branches?
-                          </span>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={handleDeleteAllStressedBranches}
-                            disabled={deletingAllBranches}
-                          >
-                            {deletingAllBranches ? "Deleting..." : "Yes"}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowDeleteAllConfirm(false)}
-                            disabled={deletingAllBranches}
-                          >
-                            No
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowDeleteAllConfirm(true)}
-                          disabled={deletingAllBranches}
-                          className="text-gh-text-muted hover:text-gh-danger-fg"
-                        >
-                          <svg
-                            className="h-3.5 w-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                          Delete all stressed branches
-                        </Button>
-                      )}
-                    </div>
-                  )}
                 </>
               )}
             </>
           )}
         </div>
 
-        {/* Clear Selection Button */}
+        {/* Action Buttons Row */}
         {selectedRepo && (
-          <button
-            onClick={() => {
-              setSelectedRepo(null);
-              setSelectedBranch(null);
-              setSelectedCommit(null);
-              setCommitDetails(null);
-              setBranches([]);
-              setCommits([]);
-              setBranchSuccess(null);
-              setStressResult(null);
-              setShowCreateBranch(false);
-            }}
-            className="mt-2 flex items-center gap-1 self-start rounded px-2 py-1.5 text-xs text-gh-text-muted transition-colors hover:bg-gh-canvas-subtle hover:text-white"
-            title="Clear selection"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Clear selection
-          </button>
+          <div className="mt-2 flex items-center justify-between">
+            <button
+              onClick={() => {
+                setSelectedRepo(null);
+                setSelectedBranch(null);
+                setSelectedCommit(null);
+                setCommitDetails(null);
+                setBranches([]);
+                setCommits([]);
+                setBranchSuccess(null);
+                setStressResult(null);
+                setShowCreateBranch(false);
+              }}
+              className="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-gh-text-muted transition-colors hover:bg-gh-canvas-subtle hover:text-white"
+              title="Clear selection"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear selection
+            </button>
+
+            {branches.some((b) => b.name.includes("stresst-")) && (
+              <>
+                {showDeleteAllConfirm ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gh-danger-fg">
+                      Delete all {branches.filter((b) => b.name.includes("stresst-")).length} stressed branches?
+                    </span>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={handleDeleteAllStressedBranches}
+                      disabled={deletingAllBranches}
+                    >
+                      {deletingAllBranches ? "Deleting..." : "Yes"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowDeleteAllConfirm(false)}
+                      disabled={deletingAllBranches}
+                    >
+                      No
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDeleteAllConfirm(true)}
+                    disabled={deletingAllBranches}
+                    className="text-gh-text-muted hover:text-gh-danger-fg"
+                  >
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    Delete all stressed branches
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         )}
 
         {/* Public Repos Section - only show when no branch selected */}
