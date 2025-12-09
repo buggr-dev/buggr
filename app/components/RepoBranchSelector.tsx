@@ -36,8 +36,9 @@ const LOADING_STEPS = [
  * @param repos - List of user's GitHub repositories
  * @param accessToken - GitHub OAuth access token for fetching data
  */
-export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorProps) {
+export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBranchSelectorProps) {
   const { addNote } = useNotes();
+  const [repos, setRepos] = useState<GitHubRepo[]>(initialRepos);
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [selectedCommit, setSelectedCommit] = useState<GitHubCommit | null>(null);
@@ -437,6 +438,17 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
     }
   }
 
+  /**
+   * Handles successful fork by adding the forked repo to the list and selecting it.
+   */
+  async function handleForkSuccess(forkedRepo: GitHubRepo) {
+    // Add the forked repo to the beginning of the list
+    setRepos((prev) => [forkedRepo, ...prev.filter((r) => r.id !== forkedRepo.id)]);
+    
+    // Auto-select the forked repo
+    handleRepoSelect(forkedRepo);
+  }
+
   return (
     <div className="flex h-screen w-full">
       {/* Left Panel - Selection & Commits */}
@@ -576,7 +588,7 @@ export function RepoBranchSelector({ repos, accessToken }: RepoBranchSelectorPro
         )}
 
         {/* Public Repos Section - only show when no branch selected */}
-        {!selectedBranch && <PublicReposList />}
+        {!selectedBranch && <PublicReposList onForkSuccess={handleForkSuccess} />}
 
         {/* Error Display */}
         {error && (

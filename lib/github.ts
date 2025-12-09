@@ -57,6 +57,38 @@ export interface GitHubCommitDetails extends GitHubCommit {
 }
 
 /**
+ * Forks a repository into the authenticated user's account.
+ * 
+ * @param accessToken - GitHub OAuth access token
+ * @param owner - Repository owner (username or org)
+ * @param repo - Repository name
+ * @returns The forked repository object
+ */
+export async function forkRepository(
+  accessToken: string,
+  owner: string,
+  repo: string
+): Promise<GitHubRepo> {
+  const response = await fetch(
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/forks`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to fork repository: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
  * Fetches public repositories from a specific GitHub user or organization.
  * Does not require authentication.
  * 
