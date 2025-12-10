@@ -33,6 +33,21 @@ export default async function Home() {
         }}
       />
 
+      {/* Fixed Login Button - always visible in top right */}
+      <div className="fixed right-6 top-6 z-40">
+        <form
+          action={async () => {
+            "use server";
+            await signIn("github", { redirectTo: "/dashboard" });
+          }}
+        >
+          <Button type="submit" variant="primary">
+            <GitHubIcon className="h-4 w-4" />
+            Log in with GitHub
+          </Button>
+        </form>
+      </div>
+
       {/* Scroll-triggered Header */}
       <ScrollHeader>
         <form
