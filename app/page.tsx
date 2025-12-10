@@ -67,10 +67,11 @@ export default async function Home() {
             Insurance against vibe coding
           </div>
           <h2 className="mb-6 text-5xl font-bold tracking-tight text-white md:text-6xl">
-            <span className="underline decoration-gh-danger decoration-4 underline-offset-4">Vibe</span> Coders —{" "}
+            Are you a{" "}
+            <span className="text-gh-danger-fg underline decoration-wavy decoration-gh-danger decoration-4 underline-offset-4">Vibe</span> Coder{" "}
             <br className="hidden md:block" />
-            prove you&apos;re not a{" "}
-            <span className="underline decoration-gh-success decoration-4 underline-offset-4">Jive</span> Coder
+            or a{" "}
+            <span className="text-gh-success-fg underline decoration-wavy decoration-gh-success decoration-4 underline-offset-4">Jive</span> Coder?
           </h2>
           <p className="mx-auto mb-10 max-w-2xl text-lg text-gh-text-muted">
             AI can write code, but can you debug it? stresst introduces realistic bugs into real
