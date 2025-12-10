@@ -1,18 +1,10 @@
-import { auth, signIn } from "@/auth";
-import { redirect } from "next/navigation";
+import { signIn } from "@/auth";
 
 /**
  * Landing/info page shown to unauthenticated users.
- * Redirects to dashboard if already authenticated.
+ * Middleware handles redirecting authenticated users to /dashboard.
  */
 export default async function Home() {
-  const session = await auth();
-  
-  // Redirect to dashboard if already authenticated
-  if (session?.user) {
-    redirect("/dashboard");
-  }
-
   return (
     <div className="relative min-h-screen bg-[#0d1117]">
       {/* Subtle gradient background */}

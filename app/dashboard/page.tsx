@@ -1,20 +1,14 @@
 import { auth, signOut } from "@/auth";
-import { redirect } from "next/navigation";
 import { fetchUserRepos } from "@/lib/github";
 import { RepoBranchSelector } from "../components/RepoBranchSelector";
 import { Button } from "../components/inputs/Button";
 
 /**
  * Dashboard page - main application interface for authenticated users.
- * Redirects to home page if not authenticated.
+ * Route is protected by middleware - only authenticated users can access.
  */
 export default async function Dashboard() {
   const session = await auth();
-  
-  // Redirect to home if not authenticated
-  if (!session?.user) {
-    redirect("/");
-  }
 
   // Fetch repos for authenticated user
   const repos = session?.accessToken 
