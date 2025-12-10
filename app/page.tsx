@@ -1,6 +1,7 @@
 import { signIn } from "@/auth";
 import { Button } from "./components/inputs/Button";
 import { ScrollHeader } from "./components/ScrollHeader";
+import { FixedLoginButton } from "./components/FixedLoginButton";
 import {
   GitHubIcon,
   LightningIcon,
@@ -33,8 +34,8 @@ export default async function Home() {
         }}
       />
 
-      {/* Fixed Login Button - always visible in top right */}
-      <div className="fixed right-6 top-6 z-40">
+      {/* Fixed Login Button - slides out when ScrollHeader appears */}
+      <FixedLoginButton>
         <form
           action={async () => {
             "use server";
@@ -46,7 +47,7 @@ export default async function Home() {
             Log in with GitHub
           </Button>
         </form>
-      </div>
+      </FixedLoginButton>
 
       {/* Scroll-triggered Header */}
       <ScrollHeader>
