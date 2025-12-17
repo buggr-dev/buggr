@@ -647,32 +647,6 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
           </div>
         )}
 
-        {/* Check Your Score Button - Featured on its own line for stresst branches */}
-        {selectedBranch && selectedBranch.includes("stresst-") && (
-          <div className="group relative mt-4">
-            <Button
-              variant="primary"
-              onClick={() => setShowScorePanel(!showScorePanel)}
-              disabled={!canCheckScore}
-              className={!canCheckScore ? "w-full opacity-50 cursor-not-allowed" : "w-full"}
-            >
-              <TrophyIcon className="h-4 w-4" />
-              {showScorePanel ? "Hide Score" : "Check Your Score"}
-            </Button>
-            {/* Tooltip for disabled state */}
-            {!canCheckScore && (
-              <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-72 -translate-x-1/2 rounded-lg border border-gh-border bg-[#1c2128] p-4 text-xs opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-                <p className="font-semibold text-white mb-2">How to check your score:</p>
-                <ol className="text-gh-text-muted space-y-2 list-decimal list-inside">
-                  <li>Make a commit with <code className="rounded bg-gh-canvas-subtle px-1.5 py-0.5 text-gh-accent">start</code> in the message when you begin debugging</li>
-                  <li>Make a commit with <code className="rounded bg-gh-canvas-subtle px-1.5 py-0.5 text-gh-accent">complete</code> when you&apos;ve fixed all bugs</li>
-                </ol>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[#1c2128]" />
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Commits List */}
         {selectedBranch && (
           <div className="mt-4 flex min-h-0 flex-1 flex-col">
@@ -853,6 +827,31 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
                     </>
                   )}
                 </Button>
+              )}
+
+              {selectedBranch && selectedBranch.includes("stresst-") && !showCreateBranch && (
+                <div className="group relative">
+                  <Button
+                    variant={canCheckScore ? "primary" : "secondary"}
+                    onClick={() => setShowScorePanel(!showScorePanel)}
+                    disabled={!canCheckScore}
+                    className={!canCheckScore ? "opacity-50 cursor-not-allowed" : ""}
+                  >
+                    <TrophyIcon className="h-4 w-4" />
+                    {showScorePanel ? "Hide Score" : "Check Score"}
+                  </Button>
+                  {/* Tooltip for disabled state */}
+                  {!canCheckScore && (
+                    <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-lg border border-gh-border bg-[#1c2128] p-3 text-xs opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                      <p className="font-semibold text-white mb-1.5">How to check your score:</p>
+                      <ol className="text-gh-text-muted space-y-1 list-decimal list-inside text-[11px]">
+                        <li>Commit with <code className="text-gh-accent">start</code> when you begin</li>
+                        <li>Commit with <code className="text-gh-accent">complete</code> when done</li>
+                      </ol>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-6 border-transparent border-t-[#1c2128]" />
+                    </div>
+                  )}
+                </div>
               )}
 
               {!showCreateBranch && (
