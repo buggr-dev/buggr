@@ -55,8 +55,8 @@ const SCORE_RATINGS: Record<string, ScoreRating> = {
     label: "Great Job",
     emoji: "🔥",
     description: "Solid work, well done!",
-    gradient: "from-green-400 to-emerald-500",
-    textColor: "text-green-300",
+    gradient: "from-emerald-600/80 to-teal-600/80",
+    textColor: "text-emerald-400",
   },
   good: {
     grade: "C",
@@ -237,7 +237,7 @@ export function ScorePanel({
                 {scoreRating.label}
               </h2>
             </div>
-            <p className="text-sm text-gh-text-muted">
+            <p className="text-sm text-white">
               {scoreRating.description}
             </p>
           </div>
