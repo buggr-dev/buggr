@@ -183,17 +183,26 @@ Respond with ONLY a JSON object in this exact format (no markdown, no explanatio
 {
   "modifiedCode": "the complete modified code with bugs introduced",
   "changes": ["technical description of bug 1", "technical description of bug 2"],
-  "symptoms": ["User-facing symptom 1 - what a QA tester would report", "User-facing symptom 2"]
+  "symptoms": ["Detailed bug report 1", "Detailed bug report 2"]
 }
 
-IMPORTANT about "symptoms": These should be written like bug reports from a confused user or QA tester who doesn't know the code. Examples:
-- "The posts are showing up blank"
-- "When I click submit, nothing happens"
-- "The app crashes when I select an item from the list"
-- "The total price is wrong - it's missing some items"
-- "The page takes forever to load and then shows an error"
-- "Some users' names are showing as 'undefined'"
-Do NOT mention code, variables, functions, or technical details in symptoms. Just describe what's broken from a user's perspective.
+IMPORTANT about "symptoms": These should be written like DETAILED bug reports from a QA tester or team member. Each symptom should be a mini bug report that gives enough context to reproduce and investigate the issue. Include:
+- What action was being performed
+- What was expected to happen
+- What actually happened instead
+- Any relevant context (e.g., specific data, conditions, or state)
+
+Format each symptom as: "[Action/Context]: [What went wrong]. Expected [X] but got [Y]."
+
+Examples of GOOD detailed symptoms:
+- "When adding the 3rd item to cart: Total shows $0.00. Expected it to show the sum of all items ($45.97)."
+- "After clicking 'Save' on the profile form: Changes appear to save but refreshing shows old data. Name field reverts to previous value."
+- "Loading the users list with 50+ entries: App crashes with white screen. Console shows 'Cannot read property of undefined'. Works fine with fewer users."
+- "Filtering products by 'Electronics' category: Shows all products instead of filtered results. The filter dropdown shows 'Electronics' is selected but list isn't filtered."
+- "Submitting a comment with special characters (tried: 'Test & <script>'): Comment posts but displays as blank. Other comments without special chars work fine."
+- "On the dashboard after midnight: Yesterday's stats showing as today's. The date header says 'Dec 22' but data is from Dec 21."
+
+Do NOT mention specific variable names, function names, or line numbers. Describe from a tester's perspective who can see the UI and behavior but not the code.
 
 The modifiedCode must be the COMPLETE file content with your bugs inserted. Do not truncate or summarize.
 You CAN add new functions, helpers, or code - not just modify existing code. If you add a helper function, make sure to actually USE it somewhere in the existing code so the bug manifests.`;
@@ -229,24 +238,24 @@ You CAN add new functions, helpers, or code - not just modify existing code. If 
 }
 
 /**
- * Generates user-friendly symptom descriptions from technical change descriptions.
+ * Generates detailed bug report descriptions from technical change descriptions.
  * Used as a fallback when AI doesn't provide symptoms.
  * 
  * @param changes - Array of technical change descriptions
- * @returns Array of user-friendly symptom descriptions
+ * @returns Array of detailed bug report descriptions
  */
 function generateFallbackSymptoms(changes: string[]): string[] {
   const symptomTemplates = [
-    "Something seems off with how the data is displayed",
-    "The page isn't working correctly",
-    "I'm seeing unexpected behavior when interacting with the UI",
-    "Some items appear to be missing or incorrect",
-    "The app seems slower or unresponsive at times",
-    "Error messages are appearing unexpectedly",
-    "Data doesn't seem to be saving properly",
-    "The calculations appear to be wrong",
-    "Some features aren't responding to clicks",
-    "The list is showing duplicates or missing entries",
+    "When loading the main list: Some items display incorrectly or are missing. Expected all items to render properly but some show as blank or 'undefined'.",
+    "After submitting the form: Data appears to save but refreshing shows old values. Expected changes to persist but they revert.",
+    "Clicking action buttons: Nothing happens on first click, sometimes works on second. Expected immediate response to user interaction.",
+    "When filtering or sorting data: Results don't match the selected criteria. Expected filtered results but seeing unfiltered or wrong items.",
+    "During page load with larger datasets: App becomes unresponsive or crashes. Expected smooth loading but getting errors or white screen.",
+    "After performing a calculation: Numbers are slightly off or completely wrong. Expected correct totals but getting incorrect values.",
+    "When navigating between sections: State is lost or shows stale data. Expected fresh data but seeing previous session's values.",
+    "Processing items in a loop: First or last item behaves differently. Expected consistent behavior but edge items are skipped or duplicated.",
+    "When conditions are checked: Logic seems inverted - things that should show are hidden and vice versa. Expected conditional display to work correctly.",
+    "Async operations (save/load/fetch): Sometimes works, sometimes doesn't. Expected reliable behavior but getting intermittent failures.",
   ];
   
   // Pick random symptoms based on number of changes
