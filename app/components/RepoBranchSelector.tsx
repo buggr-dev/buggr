@@ -83,7 +83,13 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
   /**
    * Finds a commit with "complete" in the message (case-insensitive).
    */
-  const completeCommit = commits.find((c) => c.commit.message.toLowerCase().includes("complete") || c.commit.message.toLowerCase().includes("done") || c.commit.message.toLowerCase().includes("stop") || c.commit.message.toLowerCase().includes("end"));
+  const completeCommit = commits.find(
+    (c) =>
+      c.commit.message.toLowerCase().includes("complete") ||
+      c.commit.message.toLowerCase().includes("done") ||
+      c.commit.message.toLowerCase().includes("stop") ||
+      c.commit.message.toLowerCase().includes("end")
+  );
 
   /**
    * Whether both start and complete commits exist (score can be calculated).
