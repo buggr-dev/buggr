@@ -51,19 +51,30 @@ export async function POST(request: NextRequest) {
       // Use custom bug count if provided, otherwise default to 1
       totalBugCount = typeof customBugCount === "number" && customBugCount > 0 ? customBugCount : 1;
     } else {
+      // Fixed bug counts: Low: 2, Medium: 4, High: 6
       const STRESS_CONFIGS = {
-        low: { bugCountMin: 1, bugCountMax: 2 },
-        medium: { bugCountMin: 2, bugCountMax: 3 },
-        high: { bugCountMin: 2, bugCountMax: 3 },
+        low: 2,
+        medium: 4,
+        high: 6,
       };
-      const config = STRESS_CONFIGS[stressLevel];
-      totalBugCount = Math.floor(Math.random() * (config.bugCountMax - config.bugCountMin + 1)) + config.bugCountMin;
+      totalBugCount = STRESS_CONFIGS[stressLevel];
     }
 
-    // Determine how many files to process
-    const filesToProcess = stressLevel === "custom" && typeof customFilesCount === "number" && customFilesCount > 0
-      ? Math.min(customFilesCount, files.length)
-      : 1; // Default to 1 file for non-custom modes
+    // Determine how many files to process based on stress level
+    let filesToProcess: number;
+    if (stressLevel === "custom") {
+      filesToProcess = typeof customFilesCount === "number" && customFilesCount > 0
+        ? Math.min(customFilesCount, files.length)
+        : 1;
+    } else {
+      // Low: 1 file, Medium: 2 files, High: 3 files
+      const filesByLevel = {
+        low: 1,
+        medium: 2,
+        high: 3,
+      };
+      filesToProcess = Math.min(filesByLevel[stressLevel], files.length);
+    }
 
     const results: { file: string; success: boolean; changes?: string[]; symptoms?: string[]; error?: string }[] = [];
     const allSymptoms: string[] = [];

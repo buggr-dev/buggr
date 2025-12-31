@@ -21,19 +21,19 @@ const levelConfig = {
   low: {
     emoji: "🌱",
     label: "Low",
-    description: "1 file, 1-2 bugs total",
+    description: "1 file, 2 bugs total",
     activeClass: "bg-gh-success text-white",
   },
   medium: {
     emoji: "🔥",
     label: "Medium",
-    description: "2 files, 2-3 bugs total",
+    description: "2 files, 4 bugs total",
     activeClass: "bg-gh-warning text-white",
   },
   high: {
     emoji: "💀",
     label: "High",
-    description: "3 files, 2-3 bugs total",
+    description: "3 files, 6 bugs total",
     activeClass: "bg-gh-danger text-white",
   },
   custom: {
