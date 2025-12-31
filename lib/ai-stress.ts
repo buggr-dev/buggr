@@ -114,30 +114,74 @@ function selectRandomBugTypes(count: number, content: string, filename: string, 
   const shuffledFrameworkBugs = shuffleArray(frameworkBugs);
   const shuffledGeneralBugs = shuffleArray(generalBugs);
   
-  // Select bugs ensuring category variety
-  const selected: BugType[] = [];
-  const usedCategories = new Set<string>();
+  // If framework detected and we have framework bugs, do 50/50 split
+  const shouldDoBalancedSplit = detectedFrameworks.length > 0 && frameworkBugs.length > 0;
   
-  // If framework detected and we have framework bugs, prioritize including at least one
-  const shouldIncludeFrameworkBug = detectedFrameworks.length > 0 && 
-                                     frameworkBugs.length > 0 && 
-                                     count >= 2;
-  
-  if (shouldIncludeFrameworkBug) {
-    // First: try to pick a framework bug from a new category
-    for (const bug of shuffledFrameworkBugs) {
-      if (!usedCategories.has(bug.category)) {
-        selected.push(bug);
-        usedCategories.add(bug.category);
-        break;
+  if (shouldDoBalancedSplit) {
+    // Calculate 50/50 split (round framework bugs up if odd)
+    const frameworkCount = Math.ceil(count / 2);
+    const generalCount = count - frameworkCount;
+    
+    const selected: BugType[] = [];
+    const usedCategories = new Set<string>();
+    
+    // Helper function to select bugs ensuring category variety
+    const selectWithVariety = (
+      bugPool: BugType[],
+      targetCount: number,
+      usedCategoriesSet: Set<string>
+    ): BugType[] => {
+      const selectedBugs: BugType[] = [];
+      
+      // First pass: pick one from each category
+      for (const bug of bugPool) {
+        if (selectedBugs.length >= targetCount) break;
+        if (!usedCategoriesSet.has(bug.category)) {
+          selectedBugs.push(bug);
+          usedCategoriesSet.add(bug.category);
+        }
       }
+      
+      // Second pass: if we still need more, allow category repeats
+      for (const bug of bugPool) {
+        if (selectedBugs.length >= targetCount) break;
+        if (!selectedBugs.includes(bug)) {
+          selectedBugs.push(bug);
+        }
+      }
+      
+      return selectedBugs;
+    };
+    
+    // Select framework bugs (up to available count)
+    const availableFrameworkCount = Math.min(frameworkCount, shuffledFrameworkBugs.length);
+    const selectedFrameworkBugs = selectWithVariety(
+      shuffledFrameworkBugs,
+      availableFrameworkCount,
+      usedCategories
+    );
+    selected.push(...selectedFrameworkBugs);
+    
+    // Select general bugs (fill remaining slots)
+    const remainingCount = count - selected.length;
+    if (remainingCount > 0) {
+      const selectedGeneralBugs = selectWithVariety(
+        shuffledGeneralBugs,
+        remainingCount,
+        usedCategories
+      );
+      selected.push(...selectedGeneralBugs);
     }
+    
+    return selected;
   }
   
-  // Combine remaining framework bugs with general bugs for selection
+  // No framework detected or no framework bugs available - use all bugs
   const allBugs = [...shuffledFrameworkBugs, ...shuffledGeneralBugs];
+  const selected: BugType[] = [];
+  const usedCategories = new Set<string>();
 
-  // First pass: pick one from each category (prioritizing framework bugs if available)
+  // First pass: pick one from each category
   for (const bug of allBugs) {
     if (selected.length >= count) break;
     if (!usedCategories.has(bug.category)) {
