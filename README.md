@@ -58,6 +58,8 @@ Delete stressed branches when you're done to keep your repository clean
 
 ## Getting Started
 
+> 📖 **New to stresst?** Check out the [step-by-step Getting Started guide](docs/GETTING_STARTED.md) for a complete walkthrough with your own repository.
+
 ### Prerequisites
 
 - Node.js 18+
