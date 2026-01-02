@@ -15,6 +15,7 @@ import {
   CheckIcon,
   SparklesIcon,
   InfoIcon,
+  TrophyIcon,
 } from "./components/icons";
 
 /** GitHub repository URL for "Pull from GitHub" buttons in website mode */
@@ -302,6 +303,110 @@ export default async function Home() {
             </div>
             <div className="md:col-span-2">
               <StressProcessSteps />
+            </div>
+          </div>
+        </section>
+
+        {/* Scoring Section */}
+        <section className="mb-16">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
+              <TrophyIcon className="h-5 w-5 text-amber-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white">Scoring System</h3>
+          </div>
+          <div className="rounded-xl border border-gh-border bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas p-8">
+            <p className="mb-6 text-lg leading-relaxed text-gh-text-muted">
+              Once you&apos;ve fixed the bugs and committed your changes, return to stresst to check your score.
+              The system automatically detects your start and completion commits and grades you based on 
+              how quickly you fixed all the bugs.
+            </p>
+
+            {/* Grade Cards */}
+            <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-400/10 to-yellow-500/10 p-4 text-center">
+                <div className="mb-1 text-2xl">🌟</div>
+                <div className="text-lg font-bold text-amber-300">A Grade</div>
+                <div className="text-xs text-gh-text-muted">Outstanding</div>
+              </div>
+              <div className="rounded-lg border border-emerald-500/30 bg-gradient-to-br from-emerald-600/10 to-teal-600/10 p-4 text-center">
+                <div className="mb-1 text-2xl">🔥</div>
+                <div className="text-lg font-bold text-emerald-400">B Grade</div>
+                <div className="text-xs text-gh-text-muted">Great Job</div>
+              </div>
+              <div className="rounded-lg border border-blue-500/30 bg-gradient-to-br from-blue-400/10 to-cyan-500/10 p-4 text-center">
+                <div className="mb-1 text-2xl">👍</div>
+                <div className="text-lg font-bold text-blue-300">C Grade</div>
+                <div className="text-xs text-gh-text-muted">Good Work</div>
+              </div>
+              <div className="rounded-lg border border-slate-500/30 bg-gradient-to-br from-slate-400/10 to-slate-500/10 p-4 text-center">
+                <div className="mb-1 text-2xl">💪</div>
+                <div className="text-lg font-bold text-slate-300">D Grade</div>
+                <div className="text-xs text-gh-text-muted">Keep Practicing</div>
+              </div>
+            </div>
+
+            {/* Time Thresholds Table */}
+            <div className="overflow-hidden rounded-lg border border-gh-border">
+              <table className="w-full text-sm">
+                <thead className="bg-gh-canvas-subtle">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium text-gh-text-muted">Difficulty</th>
+                    <th className="px-4 py-3 text-center font-medium text-amber-300">A</th>
+                    <th className="px-4 py-3 text-center font-medium text-emerald-400">B</th>
+                    <th className="px-4 py-3 text-center font-medium text-blue-300">C</th>
+                    <th className="px-4 py-3 text-center font-medium text-slate-300">D</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gh-border">
+                  <tr className="bg-gh-canvas">
+                    <td className="px-4 py-3 font-medium text-green-400">🌱 Easy</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">0-5 min</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">5-10 min</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">10-15 min</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">15+ min</td>
+                  </tr>
+                  <tr className="bg-gh-canvas-subtle">
+                    <td className="px-4 py-3 font-medium text-yellow-400">🔥 Medium</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">0-7 min</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">7-11 min</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">11-15 min</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">15+ min</td>
+                  </tr>
+                  <tr className="bg-gh-canvas">
+                    <td className="px-4 py-3 font-medium text-red-400">💀 Hard</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">0-10 min</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">10-15 min</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">15-20 min</td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">20+ min</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Scorecard screenshot */}
+          <div className="group relative mt-8">
+            {/* Glow effect */}
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-blue-500/20 opacity-50 blur-lg transition-opacity group-hover:opacity-75" />
+            
+            <div className="relative overflow-hidden rounded-xl border border-gh-border bg-gh-canvas-inset">
+              {/* Window header with dots */}
+              <div className="flex items-center gap-3 border-b border-gh-border bg-gh-canvas-subtle px-4 py-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+                  <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
+                  <div className="h-3 w-3 rounded-full bg-[#28c840]" />
+                </div>
+                <span className="text-xs font-medium text-gh-text-muted">
+                  Check your score after fixing the bugs
+                </span>
+              </div>
+              <img
+                src="/screenshots/screenshot-scorecard.png"
+                alt="Screenshot showing the scorecard with grade and time taken"
+                className="w-full"
+              />
             </div>
           </div>
         </section>

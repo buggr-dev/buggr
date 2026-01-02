@@ -173,11 +173,25 @@ The scoring system tracks the time between your start and completion commits, th
 
 ### 🏆 Scoring System
 
-| Difficulty | A Grade | B Grade | C Grade | D Grade |
+Once you've fixed the bugs and committed your changes, return to stresst to check your score. The system automatically detects your start and completion commits and grades you based on how quickly you fixed all the bugs.
+
+<p align="center">
+  <img src="public/screenshots/screenshot-scorecard.png" alt="Scorecard showing grade and time taken" width="100%" />
+</p>
+
+**Grades are based on difficulty level and completion time:**
+
+| Difficulty | 🌟 A Grade | 🔥 B Grade | 👍 C Grade | 💪 D Grade |
 |------------|---------|---------|---------|---------|
 | **🌱 Easy** | 0-5 min | 5-10 min | 10-15 min | 15+ min |
 | **🔥 Medium** | 0-7 min | 7-11 min | 11-15 min | 15+ min |
 | **💀 Hard** | 0-10 min | 10-15 min | 15-20 min | 20+ min |
+
+**Grade Meanings:**
+- **🌟 A (Outstanding)** — Exceptional debugging skills!
+- **🔥 B (Great Job)** — Solid work, well done!
+- **👍 C (Good Work)** — Nice effort, keep improving!
+- **💪 D (Keep Practicing)** — You finished! Practice makes perfect.
 
 > **Tip:** The scoring thresholds can be customized in `lib/score-config.ts`
 
