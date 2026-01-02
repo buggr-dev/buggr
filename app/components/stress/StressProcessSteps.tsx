@@ -4,10 +4,12 @@ import { SearchIcon, CheckIcon, LightningIcon } from "@/app/components/icons";
 /**
  * Returns the appropriate icon component for a loading step.
  */
-function StepIcon({ icon }: { icon: string }) {
+function StepIcon({ icon }: { icon: string | undefined }) {
   const className = "h-4 w-4";
 
   switch (icon) {
+    case undefined:
+      return <div className="h-2 w-2 rounded-full bg-current" />;
     case "branch":
       return (
         <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
