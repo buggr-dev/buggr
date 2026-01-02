@@ -28,6 +28,12 @@ Run stresst without paying for API calls by using a local LLM. This guide covers
 - Bug quality depends heavily on model choice
 - Requires decent hardware (8GB+ RAM, ideally a GPU)
 
+> ⚠️ **Performance Warning:** Running local LLMs can be **very slow and resource-intensive**. Generation times can range from 30 seconds to several minutes depending on your hardware. For acceptable performance, we strongly recommend:
+> - A **dedicated GPU** with at least 8GB VRAM
+> - **16GB+ system RAM** (32GB+ for larger models)
+> - Using a **powerful, well-optimized model** like `llama3` or `codellama`
+> - If you have limited hardware, consider using the cloud-based Anthropic option instead for a better experience.
+
 ---
 
 ## Option 1: Ollama (Recommended)
