@@ -15,11 +15,19 @@ import {
   InfoIcon,
 } from "./components/icons";
 
+/** GitHub repository URL for "Pull from GitHub" buttons in website mode */
+const GITHUB_REPO_URL = "https://github.com/brenoneill/stresst";
+
 /**
  * Landing/info page shown to unauthenticated users.
  * Middleware handles redirecting authenticated users to /dashboard.
+ * 
+ * When WEBSITE_MODE env var is set, login buttons become "Pull from GitHub" links
+ * since authentication only works when running locally.
  */
 export default async function Home() {
+  const isWebsiteMode = process.env.WEBSITE_MODE === "true";
+
   return (
     <div className="relative min-h-screen bg-gh-canvas">
       {/* Subtle gradient background */}
@@ -36,32 +44,50 @@ export default async function Home() {
 
       {/* Fixed Login Button - slides out when ScrollHeader appears */}
       <FixedLoginButton>
-        <form
-          action={async () => {
-            "use server";
-            await signIn("github", { redirectTo: "/dashboard" });
-          }}
-        >
-          <Button type="submit" variant="primary">
-            <GitHubIcon className="h-4 w-4" />
-            Log in with GitHub
-          </Button>
-        </form>
+        {isWebsiteMode ? (
+          <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+            <Button type="button" variant="primary">
+              <GitHubIcon className="h-4 w-4" />
+              Pull from GitHub
+            </Button>
+          </a>
+        ) : (
+          <form
+            action={async () => {
+              "use server";
+              await signIn("github", { redirectTo: "/dashboard" });
+            }}
+          >
+            <Button type="submit" variant="primary">
+              <GitHubIcon className="h-4 w-4" />
+              Log in with GitHub
+            </Button>
+          </form>
+        )}
       </FixedLoginButton>
 
       {/* Scroll-triggered Header */}
       <ScrollHeader>
-        <form
-          action={async () => {
-            "use server";
-            await signIn("github", { redirectTo: "/dashboard" });
-          }}
-        >
-          <Button type="submit" variant="primary">
-            <GitHubIcon className="h-4 w-4" />
-            Log in with GitHub
-          </Button>
-        </form>
+        {isWebsiteMode ? (
+          <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+            <Button type="button" variant="primary">
+              <GitHubIcon className="h-4 w-4" />
+              Pull from GitHub
+            </Button>
+          </a>
+        ) : (
+          <form
+            action={async () => {
+              "use server";
+              await signIn("github", { redirectTo: "/dashboard" });
+            }}
+          >
+            <Button type="submit" variant="primary">
+              <GitHubIcon className="h-4 w-4" />
+              Log in with GitHub
+            </Button>
+          </form>
+        )}
       </ScrollHeader>
 
       {/* Main content */}
@@ -83,17 +109,26 @@ export default async function Home() {
             AI can write code, but can you debug it? stresst introduces realistic bugs into real
             codebases to test if developers truly understand what they&apos;re shipping.
           </p>
-          <form
-            action={async () => {
-              "use server";
-              await signIn("github", { redirectTo: "/dashboard" });
-            }}
-          >
-            <Button type="submit" variant="primary" size="lg">
-              <GitHubIcon className="h-5 w-5" />
-              Get Started
-            </Button>
-          </form>
+          {isWebsiteMode ? (
+            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+              <Button type="button" variant="primary" size="lg">
+                <GitHubIcon className="h-5 w-5" />
+                Pull from GitHub
+              </Button>
+            </a>
+          ) : (
+            <form
+              action={async () => {
+                "use server";
+                await signIn("github", { redirectTo: "/dashboard" });
+              }}
+            >
+              <Button type="submit" variant="primary" size="lg">
+                <GitHubIcon className="h-5 w-5" />
+                Get Started
+              </Button>
+            </form>
+          )}
         </section>
 
         {/* What It Is Section */}
@@ -314,17 +349,26 @@ export default async function Home() {
             <p className="mx-auto mb-6 max-w-lg text-gh-text-muted">
               Connect your GitHub account and start building real debugging muscle today.
             </p>
-            <form
-              action={async () => {
-                "use server";
-                await signIn("github", { redirectTo: "/dashboard" });
-              }}
-            >
-            <Button type="submit" variant="primary" size="lg">
-              <GitHubIcon className="h-5 w-5" />
-              Start Stressing
-            </Button>
-            </form>
+            {isWebsiteMode ? (
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+                <Button type="button" variant="primary" size="lg">
+                  <GitHubIcon className="h-5 w-5" />
+                  Pull from GitHub
+                </Button>
+              </a>
+            ) : (
+              <form
+                action={async () => {
+                  "use server";
+                  await signIn("github", { redirectTo: "/dashboard" });
+                }}
+              >
+                <Button type="submit" variant="primary" size="lg">
+                  <GitHubIcon className="h-5 w-5" />
+                  Start Stressing
+                </Button>
+              </form>
+            )}
           </div>
         </section>
 
