@@ -123,6 +123,28 @@ Open [http://localhost:3000](http://localhost:3000) to get started.
 8. Wait for the AI to introduce bugs
 9. Share the bug report with your team!
 
+### Playing the Game
+
+Once you have a stressed branch to debug:
+
+1. **Clone the stressed branch** to your local machine
+2. **Start the timer** — Make a commit with `start` in the message (e.g., "start debugging")
+3. **Find and fix the bugs** — Review the code, identify issues, and make your fixes
+4. **Stop the timer** — Make a commit with `done`, `complete`, `end`, or `stop` in the message
+5. **Check your score** — Return to stresst and click "Check Score" to see your grade
+
+The scoring system tracks the time between your start and completion commits, then grades you based on the difficulty level:
+
+### 🏆 Scoring System
+
+| Difficulty | A Grade | B Grade | C Grade | D Grade |
+|------------|---------|---------|---------|---------|
+| **🌱 Easy** | 0-5 min | 5-10 min | 10-15 min | 15+ min |
+| **🔥 Medium** | 0-7 min | 7-11 min | 11-15 min | 15+ min |
+| **💀 Hard** | 0-10 min | 10-15 min | 15-20 min | 20+ min |
+
+> **Tip:** The scoring thresholds can be customized in `lib/score-config.ts`
+
 ### Finding the Bugs
 
 Once a stressed branch is created:
@@ -161,7 +183,8 @@ stresst/
 │   └── page.tsx           # Home page
 ├── lib/
 │   ├── ai-stress.ts       # AI bug generation logic
-│   └── github.ts          # GitHub API utilities
+│   ├── github.ts          # GitHub API utilities
+│   └── score-config.ts    # Scoring thresholds configuration
 ├── auth.ts                # NextAuth.js configuration
 └── types/                 # TypeScript type definitions
 ```
