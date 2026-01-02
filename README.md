@@ -8,6 +8,10 @@ When the AI-generated code breaks (and it will), can your team debug it? Or are 
 
 **stresst** is a training tool that stress-tests developer comprehension. It uses AI to introduce realistic, subtle bugs into real codebases — the kind of bugs that require *actual understanding* to find and fix. No amount of "please fix" prompts will help.
 
+<p align="center">
+  <img src="public/screenshots/screenshot-bug-report-showing-min.png" alt="stresst interface showing bug reports" width="100%" />
+</p>
+
 ### Why stresst?
 
 - 🛡️ **Verify comprehension** — Ensure developers understand the code they're shipping, not just generating
@@ -24,6 +28,10 @@ When the AI-generated code breaks (and it will), can your team debug it? Or are 
 4. **Configure stress level** — Low (1-2 bugs), Medium (2-3 bugs), or High (3-5 bugs)
 5. **Create stressed branch** — AI analyzes your code and introduces realistic bugs
 6. **Share with your team** — send the bug report to a colleague to debug
+
+<p align="center">
+  <img src="public/screenshots/screenshot-select-commit-to-stress-min.png" alt="Selecting a commit and configuring stress level" width="100%" />
+</p>
 
 ## Features
 
@@ -146,6 +154,10 @@ Open [http://localhost:3000](http://localhost:3000) to get started.
 7. Click "Create & Stress"
 8. Wait for the AI to introduce bugs
 9. Share the bug report with your team!
+
+<p align="center">
+  <img src="public/screenshots/screenshot-stressing-code-min.png" alt="AI stressing code in progress" width="100%" />
+</p>
 
 ### Playing the Game
 
