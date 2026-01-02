@@ -17,20 +17,12 @@ import { BranchSuccessCard } from "@/app/components/stress/BranchSuccessCard";
 import { ScorePanel } from "@/app/components/stress/ScorePanel";
 import { PublicReposList } from "@/app/components/PublicReposList";
 import { GitHubIcon, CloseIcon, TrashIcon, DocumentIcon, CheckIcon, CopyIcon, LightningIcon, ExternalLinkIcon, TrophyIcon } from "@/app/components/icons";
+import { LOADING_STEPS } from "@/app/components/stress/loading-steps";
 
 interface RepoBranchSelectorProps {
   repos: GitHubRepo[];
   accessToken: string;
 }
-
-// Loading steps for the stress process
-const LOADING_STEPS = [
-  { label: "Creating branch", icon: "branch", timeEstimate: "5-30s" },
-  { label: "Analyzing files", icon: "search", timeEstimate: "5-30s" },
-  { label: "Stressing out your code", icon: "stress", timeEstimate: "1-2 min" },
-  { label: "Committing changes", icon: "commit", timeEstimate: "5-30s" },
-  { label: "Finalizing", icon: "check", timeEstimate: "5-30s" },
-];
 
 /**
  * Split-screen component for selecting a repository, branch, viewing commits,

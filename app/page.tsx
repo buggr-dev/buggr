@@ -3,6 +3,7 @@ import { Button } from "./components/inputs/Button";
 import { ScrollHeader } from "./components/ScrollHeader";
 import { FixedLoginButton } from "./components/FixedLoginButton";
 import { PublicReposPreview } from "./components/repos/PublicReposPreview";
+import { StressProcessSteps } from "./components/stress/StressProcessSteps";
 import {
   GitHubIcon,
   LightningIcon,
@@ -236,6 +237,22 @@ export default async function Home() {
                 <p className="text-sm text-gh-text-muted">{item.desc}</p>
               </div>
             ))}
+          </div>
+
+          {/* Stress Process Details */}
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            <div className="flex flex-col justify-center">
+              <h4 className="mb-3 text-lg font-semibold text-white">The Stress Process</h4>
+              <p className="text-sm leading-relaxed text-gh-text-muted">
+                When you hit &quot;Stress&quot;, our AI analyzes your codebase, identifies the most 
+                interesting files to inject bugs into, and creates a new branch with realistic, 
+                hard-to-spot issues. You&apos;ll get a bug report describing symptoms — just like 
+                a real user complaint — without revealing where the bugs are.
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <StressProcessSteps />
+            </div>
           </div>
         </section>
 
