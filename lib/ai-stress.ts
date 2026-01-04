@@ -170,7 +170,7 @@ async function createLanguageModel(): Promise<LanguageModel> {
         );
       }
       
-      return anthropic(process.env.AI_MODEL || "claude-3-5-sonnet-20241022");
+      return anthropic(process.env.AI_MODEL || "claude-sonnet-4-20250514");
     }
   }
 }

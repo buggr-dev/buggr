@@ -210,7 +210,7 @@ OPENAI_COMPATIBLE_API_KEY=your-api-key
 |----------|----------|---------|-------------|
 | `AI_PROVIDER` | No | `anthropic` | Provider: `anthropic`, `ollama`, or `openai-compatible` |
 | `OLLAMA_BASE_URL` | No | `http://localhost:11434/v1` | Ollama server URL |
-| `AI_MODEL` | No | `llama3` (Ollama) / `claude-3-5-sonnet-20241022` (Anthropic) | Model name for any provider |
+| `AI_MODEL` | No | `llama3` (Ollama) / `claude-sonnet-4-20250514` (Anthropic) | Model name for any provider |
 | `OPENAI_COMPATIBLE_BASE_URL` | Yes* | - | Server URL (*required if using openai-compatible) |
 | `OPENAI_COMPATIBLE_MODEL` | No | `default` | Model name for OpenAI-compatible servers |
 | `OPENAI_COMPATIBLE_API_KEY` | No | `not-needed` | API key if required by server |
