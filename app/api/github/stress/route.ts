@@ -79,11 +79,19 @@ export async function POST(request: NextRequest) {
     const results: { file: string; success: boolean; changes?: string[]; symptoms?: string[]; error?: string }[] = [];
     const allSymptoms: string[] = [];
 
-    // Count valid code files to determine line limit
-    const validCodeFiles = files.filter((filePath) => {
-      const ext = filePath.split(".").pop()?.toLowerCase();
-      return ["ts", "tsx", "js", "jsx", "py", "java", "go", "rs", "c", "cpp", "h", "cs"].includes(ext || "");
-    });
+    // Supported file extensions for stress testing
+    const SUPPORTED_EXTENSIONS = [
+      // JavaScript/TypeScript
+      "ts", "tsx", "js", "jsx", "mjs", "cjs",
+      // Web
+      "html", "htm", "css", "scss", "sass", "less",
+      // Frameworks
+      "vue", "svelte", "astro",
+      // Backend
+      "py", "java", "go", "rs", "c", "cpp", "h", "cs", "rb", "php",
+      // Config/Data (can have bugs too)
+      "json", "yaml", "yml",
+    ];
     
     // Determine line limit based on number of files to process
     const maxFileLines = filesToProcess === 1 ? MAX_FILE_LINES_SINGLE : MAX_FILE_LINES_MULTIPLE;
@@ -100,7 +108,7 @@ export async function POST(request: NextRequest) {
       try {
         // Skip non-code files
         const ext = filePath.split(".").pop()?.toLowerCase();
-        if (!["ts", "tsx", "js", "jsx", "py", "java", "go", "rs", "c", "cpp", "h", "cs"].includes(ext || "")) {
+        if (!SUPPORTED_EXTENSIONS.includes(ext || "")) {
           results.push({ file: filePath, success: false, error: "Skipped non-code file" });
           continue;
         }
