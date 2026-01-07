@@ -14,7 +14,7 @@ interface BranchSuccessCardProps {
    */
   onDismiss: () => void;
   /**
-   * Callback when "Show Stressed Branch" is clicked.
+   * Callback when "Show Buggered Branch" is clicked.
    */
   onShowBranch: () => void;
 }
@@ -45,7 +45,7 @@ export function BranchSuccessCard({ branchName, onDismiss, onShowBranch }: Branc
       </p>
       <Button variant="primary" fullWidth onClick={onShowBranch}>
         <ArrowRightIcon className="h-4 w-4" />
-        Show Stressed Branch
+        Show Buggered Branch
       </Button>
     </Card>
   );

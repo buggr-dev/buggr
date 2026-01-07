@@ -18,7 +18,7 @@ interface ScorePanelProps {
   branchName: string;
   /** Callback to close the score panel */
   onClose: () => void;
-  /** Optional stress test metadata from .stresst.json */
+  /** Optional buggr metadata from .buggr.json */
   stressMetadata?: StressMetadata | null;
 }
 
@@ -114,7 +114,7 @@ export function ScorePanel({
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <TrophyIcon className="h-4 w-4 text-amber-400" />
-              <span className="text-xs font-semibold tracking-wide text-white uppercase">stresst</span>
+              <span className="text-xs font-semibold tracking-wide text-white uppercase">Buggr</span>
             </div>
             {repoFullName && (
               <code className="font-mono text-xs text-white">{repoFullName}</code>

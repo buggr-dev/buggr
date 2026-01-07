@@ -2,18 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchPublicRepos } from "@/lib/github";
 
 // The GitHub username/org to fetch public repos from
-const STRESST_GITHUB_USERNAME = "brenoneill";
+const BUGGR_GITHUB_USERNAME = "brenoneill";
 
 /**
  * GET /api/github/public-repos
  * 
- * Fetches public repositories from the stresst GitHub account.
+ * Fetches public repositories from the Buggr GitHub account.
  * Does not require authentication.
  */
 export async function GET(request: NextRequest) {
   // Allow override via query param for flexibility
   const searchParams = request.nextUrl.searchParams;
-  const username = searchParams.get("username") || STRESST_GITHUB_USERNAME;
+  const username = searchParams.get("username") || BUGGR_GITHUB_USERNAME;
 
   try {
     const repos = await fetchPublicRepos(username);

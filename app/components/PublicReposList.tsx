@@ -15,7 +15,7 @@ interface PublicReposListProps {
 
 /**
  * Displays a list of public repositories available for forking.
- * Fetches repos from the stresst GitHub account.
+ * Fetches repos from the Buggr GitHub account.
  *
  * @param onForkSuccess - Callback triggered when a repo is successfully forked
  * @param userRepos - User's existing repos to determine if a repo is already forked
@@ -114,7 +114,7 @@ export function PublicReposList({ onForkSuccess, userRepos = [] }: PublicReposLi
       )}
 
       <div className="flex flex-col gap-2">
-        {repos.filter((repo) => repo.name !== "stresst").map((repo) => {
+        {repos.filter((repo) => repo.name !== "buggr").map((repo) => {
           const isForking = forkingRepo === repo.full_name;
           const repoUrl = `https://github.com/${repo.full_name}`;
           const isAlreadyForked = userRepos.some((userRepo) => userRepo.name === repo.name);

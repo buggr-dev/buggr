@@ -19,7 +19,7 @@ import {
 } from "./components/icons";
 
 /** GitHub repository URL for "Pull from GitHub" buttons in website mode */
-const GITHUB_REPO_URL = "https://github.com/brenoneill/stresst";
+const GITHUB_REPO_URL = "https://github.com/brenoneill/buggr";
 
 /**
  * Landing/info page shown to unauthenticated users.
@@ -213,7 +213,7 @@ export default async function Home() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
               <LightbulbIcon className="h-5 w-5 text-gh-success" />
             </div>
-            <h3 className="text-2xl font-bold text-white">Why stresst?</h3>
+            <h3 className="text-2xl font-bold text-white">Why Buggr?</h3>
           </div>
           <div className="rounded-xl border border-gh-border bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas p-8">
             <p className="mb-4 text-lg leading-relaxed text-gh-text-muted">
@@ -227,7 +227,7 @@ export default async function Home() {
               Or are you just re-prompting until the errors go away?
             </p>
             <p className="text-lg leading-relaxed text-gh-text-muted">
-              <span className="font-semibold text-white">stresst</span> gives you practice debugging 
+              <span className="font-semibold text-white">Buggr</span> gives you practice debugging 
               real codebases with realistic bugs. It&apos;s a way to build actual debugging skills —{" "}
               <span className="font-semibold text-gh-danger-fg">
                 skills you&apos;ll need when AI-generated code inevitably breaks.
@@ -277,7 +277,7 @@ export default async function Home() {
                   <div className="h-3 w-3 rounded-full bg-[#28c840]" />
                 </div>
                 <span className="text-xs font-medium text-gh-text-muted">
-                  Select a commit and configure stress level
+                  Select a commit and configure bug level
                 </span>
               </div>
               <img
@@ -293,7 +293,7 @@ export default async function Home() {
             <div className="flex flex-col justify-center">
               <h4 className="mb-3 text-lg font-semibold text-white">The Process</h4>
               <p className="text-sm leading-relaxed text-gh-text-muted">
-                When you click &quot;Stress&quot;, our AI analyzes your code, 
+                When you click &quot;Bugger&quot;, our AI analyzes your code, 
                 picks files to inject bugs into, creates a new branch, and gives you a bug 
                 report describing the symptoms.
               </p>
@@ -493,13 +493,13 @@ export default async function Home() {
                 <div className="rounded-lg bg-gh-canvas p-4">
                   <code className="text-sm text-gh-text-muted">
                     <span className="text-gh-text-muted">$</span>{" "}
-                    <span className="text-gh-accent">git clone</span> https://github.com/brenoneill/stresst.git
+                    <span className="text-gh-accent">git clone</span> https://github.com/brenoneill/buggr.git
                   </code>
                 </div>
                 <div className="rounded-lg bg-gh-canvas p-4">
                   <code className="text-sm text-gh-text-muted">
                     <span className="text-gh-text-muted">$</span> <span className="text-gh-accent">cd</span>{" "}
-                    stresst && <span className="text-gh-accent">npm install</span>
+                    buggr && <span className="text-gh-accent">npm install</span>
                   </code>
                 </div>
                 <div className="rounded-lg bg-gh-canvas p-4">
@@ -513,7 +513,7 @@ export default async function Home() {
             <p className="text-sm text-gh-text-muted">
               Check the{" "}
               <a
-                href="https://github.com/brenoneill/stresst#readme"
+                href="https://github.com/brenoneill/buggr#readme"
                 className="text-gh-accent hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -548,7 +548,7 @@ export default async function Home() {
               >
                 <Button type="submit" variant="primary" size="lg">
                   <GitHubIcon className="h-5 w-5" />
-                  Start Stressing
+                  Start Buggering
                 </Button>
               </form>
             )}

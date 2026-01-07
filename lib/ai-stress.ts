@@ -391,7 +391,7 @@ ${examples}
 }
 
 /**
- * Custom error class for AI stress generation failures.
+ * Custom error class for AI bug generation failures.
  */
 export class AIStressError extends Error {
   constructor(message: string, public readonly cause?: unknown) {
@@ -401,7 +401,7 @@ export class AIStressError extends Error {
 }
 
 /**
- * Uses AI to introduce subtle but nasty breaking changes to code.
+ * Uses AI to bugger up code with subtle but nasty breaking changes.
  * The changes should be realistic bugs that require debugging skills to find and fix.
  * 
  * Requires ANTHROPIC_API_KEY environment variable to be set.
@@ -409,8 +409,8 @@ export class AIStressError extends Error {
  * @param content - Original file content
  * @param filename - Name of the file
  * @param context - Optional context about what specific areas to focus bugs on (max 200 chars)
- * @param stressLevel - Stress level: "low", "medium", or "high"
- * @param targetBugCount - Optional specific number of bugs to introduce (overrides stress level bug count)
+ * @param stressLevel - Bug level: "low", "medium", or "high"
+ * @param targetBugCount - Optional specific number of bugs to introduce (overrides bug level bug count)
  * @returns Modified content with AI-generated breaking changes, descriptions, and user-facing symptoms
  * @throws AIStressError if AI is unavailable or fails to generate bugs
  */
@@ -446,9 +446,9 @@ export async function introduceAIStress(
     ? `\n\nFOCUS AREA: The user wants to specifically test: "${context}"\nTry to apply the bugs in areas related to this focus when possible.`
     : "";
   
-  const prompt = `You are a stress engineer introducing specific bugs into code for a debugging training game.
+  const prompt = `You are a bug engineer introducing specific bugs into code for a debugging training game.
 
-STRESS LEVEL: ${stressLevel.toUpperCase()}
+BUG LEVEL: ${stressLevel.toUpperCase()}
 ${config.description}
 
 YOU MUST INTRODUCE EXACTLY THESE ${bugCount} BUG(S):

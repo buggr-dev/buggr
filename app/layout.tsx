@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "stresst - Stress Test Your Developers",
+  title: "Buggr - Bugger Up Your Code",
   description: "Introduce subtle bugs to test debugging skills",
 };
 

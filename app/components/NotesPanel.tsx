@@ -128,7 +128,7 @@ export function NotesButton({ onClick }: { onClick: () => void }) {
 }
 
 /**
- * Notes panel component that displays notifications about stressed branches.
+ * Notes panel component that displays notifications about buggered branches.
  * Shows as a slide-out panel from the right side with tabs for Bug Reports and Branch Changes.
  */
 export function NotesPanel() {
@@ -313,7 +313,7 @@ export function NotesPanel() {
                 <EmptyState
                   icon={EmptyStateIcons.bugReports}
                   title="No bug reports yet"
-                  description="Stress a branch to see reports here"
+                  description="Bugger a branch to see reports here"
                 />
               ) : (
                 <div className="flex flex-col">
@@ -419,7 +419,7 @@ export function NotesPanel() {
                 <EmptyState
                   icon={EmptyStateIcons.commits}
                   title="No branch changes yet"
-                  description="File changes from stressed branches will appear here"
+                  description="File changes from buggered branches will appear here"
                 />
               ) : (
                 <div className="flex flex-col">
@@ -440,7 +440,7 @@ export function NotesPanel() {
                             {!change.read && (
                               <span className="h-2 w-2 flex-shrink-0 rounded-full bg-gh-accent" />
                             )}
-                            <h3 className="text-sm font-medium text-white">Branch Stressed</h3>
+                            <h3 className="text-sm font-medium text-white">Branch Buggered</h3>
                           </div>
                           <span className="flex-shrink-0 text-xs text-gh-text-muted">
                             {formatRelativeTime(change.timestamp)}

@@ -1,6 +1,6 @@
 # 🦙 Local LLM Setup Guide
 
-Run stresst without paying for API calls by using a local LLM. This guide covers setup with **Ollama** (recommended) and other OpenAI-compatible servers.
+Run Buggr without paying for API calls by using a local LLM. This guide covers setup with **Ollama** (recommended) and other OpenAI-compatible servers.
 
 ## Table of Contents
 
@@ -79,10 +79,10 @@ ollama serve
 
 The server runs on `http://localhost:11434` by default.
 
-### Step 4: Install stresst Dependency
+### Step 4: Install Buggr Dependency
 
 ```bash
-cd /path/to/stresst
+cd /path/to/buggr
 npm install @ai-sdk/openai
 ```
 
@@ -101,13 +101,13 @@ AI_MODEL=llama3
 # OLLAMA_BASE_URL=http://localhost:11434/v1
 ```
 
-### Step 6: Run stresst
+### Step 6: Run Buggr
 
 ```bash
 npm run dev
 ```
 
-That's it! stresst will now use your local Ollama instance.
+That's it! Buggr will now use your local Ollama instance.
 
 ---
 
@@ -132,7 +132,7 @@ Download from [lmstudio.ai](https://lmstudio.ai)
 3. Click "Start Server"
 4. Note the server URL (usually `http://localhost:1234/v1`)
 
-### Step 4: Install stresst Dependency
+### Step 4: Install Buggr Dependency
 
 ```bash
 npm install @ai-sdk/openai
@@ -157,7 +157,7 @@ OPENAI_COMPATIBLE_MODEL=local-model
 
 ## Option 3: Other OpenAI-Compatible Servers
 
-stresst works with any server that exposes an OpenAI-compatible API:
+Buggr works with any server that exposes an OpenAI-compatible API:
 
 - **LocalAI** - [github.com/localai/localai](https://github.com/localai/localai)
 - **vLLM** - [github.com/vllm-project/vllm](https://github.com/vllm-project/vllm)
@@ -221,7 +221,7 @@ OPENAI_COMPATIBLE_API_KEY=your-api-key
 
 ### "Connection refused" error
 
-**Problem:** stresst can't connect to your local LLM server.
+**Problem:** Buggr can't connect to your local LLM server.
 
 **Solutions:**
 1. Make sure the server is running (`ollama serve` for Ollama)
@@ -277,14 +277,14 @@ curl http://localhost:11434/v1/models
 1. **Use GPU acceleration** if available - significantly faster
 2. **Keep the Ollama server running** - first request after cold start is slower
 3. **Use quantized models** (q4, q5) for better speed with minimal quality loss
-4. **Allocate enough context** - stresst sends large prompts with full file contents
+4. **Allocate enough context** - Buggr sends large prompts with full file contents
 
 ---
 
 ## Still Having Issues?
 
 1. Check the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/README.md)
-2. Open an issue on the [stresst GitHub repository](https://github.com/brenoneill/stresst/issues)
+2. Open an issue on the [Buggr GitHub repository](https://github.com/brenoneill/buggr/issues)
 3. Verify your setup works with a simple test:
 
 ```bash
@@ -296,5 +296,5 @@ curl http://localhost:11434/api/generate -d '{
 }'
 ```
 
-If Ollama responds correctly but stresst doesn't work, the issue is likely in the environment configuration.
+If Ollama responds correctly but Buggr doesn't work, the issue is likely in the environment configuration.
 

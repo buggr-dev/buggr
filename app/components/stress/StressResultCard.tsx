@@ -12,7 +12,7 @@ interface StressResult {
 
 interface StressResultCardProps {
   /**
-   * The stress result data.
+   * The buggr result data.
    */
   result: StressResult;
   /**
@@ -26,9 +26,9 @@ interface StressResultCardProps {
 }
 
 /**
- * A card displaying the results of a stress operation.
+ * A card displaying the results of a bugger operation.
  *
- * @param result - The stress result data
+ * @param result - The buggr result data
  * @param authorName - Author name to show in the message
  * @param onDismiss - Callback to dismiss the card
  */
@@ -38,7 +38,7 @@ export function StressResultCard({ result, authorName, onDismiss }: StressResult
       <div className="mb-3 flex items-center justify-between">
         <h4 className="flex items-center gap-2 font-medium text-gh-danger-fg">
           <LightningIcon className="h-4 w-4" />
-          {authorName}&apos;s commit is now stressed! 😈
+          {authorName}&apos;s commit is now buggered! 😈
         </h4>
         <Button variant="ghost" size="icon" onClick={onDismiss}>
           <CloseIcon className="h-4 w-4" />

@@ -45,16 +45,16 @@ const levelConfig = {
 };
 
 /**
- * A toggle button group for selecting stress level (low, medium, high).
+ * A toggle button group for selecting bug level (low, medium, high).
  *
- * @param value - Currently selected stress level
+ * @param value - Currently selected bug level
  * @param onChange - Callback when selection changes
  * @param disabled - Whether the selector is disabled
  */
 export function StressLevelSelector({ value, onChange, disabled }: StressLevelSelectorProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-gh-text-muted">Stress Level</label>
+      <label className="text-xs font-medium text-gh-text-muted">Bug Level</label>
       <div className="flex rounded-lg border border-gh-border bg-gh-canvas p-1">
         {(["low", "medium", "high", "custom"] as const).map((level) => {
           const config = levelConfig[level];

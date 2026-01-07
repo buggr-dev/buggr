@@ -10,7 +10,7 @@ type StressLevel = "low" | "medium" | "high" | "custom";
 
 interface CreateBranchFormProps {
   /**
-   * The base branch name being stressed.
+   * The base branch name being buggered.
    */
   baseBranch: string;
   /**
@@ -87,12 +87,12 @@ interface CreateBranchFormProps {
  * Returns the full branch name with prefix, timestamp, and optional suffix.
  */
 function getFullBranchName(baseBranch: string, timestamp: string, suffix: string): string {
-  const base = `stresst-${baseBranch}-${timestamp}`;
+  const base = `buggr-${baseBranch}-${timestamp}`;
   return suffix.trim() ? `${base}-${suffix.trim()}` : base;
 }
 
 /**
- * Form component for creating a stressed branch.
+ * Form component for creating a buggered branch.
  *
  * @param props - Form configuration and callbacks
  */
@@ -122,7 +122,7 @@ export function CreateBranchForm({
     <Card as="form" onSubmit={onSubmit} className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-white">
-          Create stressed branch from this commit
+          Create buggered branch from this commit
         </label>
         <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
           <CloseIcon className="h-4 w-4" />
@@ -132,7 +132,7 @@ export function CreateBranchForm({
       {/* Branch name input */}
       <div className="flex items-center rounded-lg border border-gh-border bg-gh-canvas">
         <span className="whitespace-nowrap border-r border-gh-border bg-gh-canvas-subtle px-3 py-2 font-mono text-sm text-gh-text-muted">
-          stresst-{baseBranch}-{timestamp}-
+          buggr-{baseBranch}-{timestamp}-
         </span>
         <input
           type="text"
@@ -160,7 +160,7 @@ export function CreateBranchForm({
         <div className="flex flex-col gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-gh-text-muted">
-              Number of files to stress
+              Number of files to bugger
             </label>
             <input
               type="number"
@@ -228,7 +228,7 @@ export function CreateBranchForm({
       ) : (
         <Button type="submit" variant="danger" size="lg" fullWidth>
           <LightningIcon className="h-4 w-4" />
-          Create & Stress
+          Create & Bugger
         </Button>
       )}
     </Card>

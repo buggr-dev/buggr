@@ -1,15 +1,15 @@
-# 🚀 Getting Started with stresst
+# 🚀 Getting Started with Buggr
 
-A step-by-step guide to stress testing your own repository.
+A step-by-step guide to buggering up your own repository.
 
 ---
 
 ## Overview
 
 This guide walks you through:
-1. Setting up a repository for stress testing
-2. Marking files you want stresst to break
-3. Creating a stressed branch with AI-generated bugs
+1. Setting up a repository for bug injection
+2. Marking files you want Buggr to break
+3. Creating a buggered branch with AI-generated bugs
 4. Running your broken app to practice debugging
 
 **Time to complete:** ~15 minutes
@@ -26,8 +26,8 @@ Start with a working application. This can be:
 ### Example: Create a Simple React App
 
 ```bash
-npx create-next-app@latest my-stresst-app
-cd my-stresst-app
+npx create-next-app@latest my-buggr-app
+cd my-buggr-app
 ```
 
 Or use any existing project you have.
@@ -36,35 +36,35 @@ Or use any existing project you have.
 
 ---
 
-## Step 2: Mark Files for stresst
+## Step 2: Mark Files for Buggr
 
-stresst works by analyzing commits. When you select a commit, it looks at the **files changed in that commit** and introduces bugs into those files.
+Buggr works by analyzing commits. When you select a commit, it looks at the **files changed in that commit** and introduces bugs into those files.
 
 ### How to Target Specific Files
 
-To control which files get stressed, create a commit that touches only the files you want to break. Here's the workflow:
+To control which files get buggered, create a commit that touches only the files you want to break. Here's the workflow:
 
-**Option A: Add a stresst marker comment**
+**Option A: Add a buggr marker comment**
 
-Add a small comment to each file you want to potentially stress:
+Add a small comment to each file you want to potentially bugger:
 
 ```javascript
-// stresst: include this file in stress testing
+// buggr: include this file in bug testing
 ```
 
 ```typescript
-// stresst: this component handles user authentication
+// buggr: this component handles user authentication
 ```
 
 ```python
-# stresst: core business logic - good candidate for debugging practice
+# buggr: core business logic - good candidate for debugging practice
 ```
 
-The comment itself doesn't affect stresst's behavior, but making this change ensures the file appears in your commit's diff.
+The comment itself doesn't affect Buggr's behavior, but making this change ensures the file appears in your commit's diff.
 
 **Option B: Make a meaningful change**
 
-Instead of marker comments, make small functional changes to the files you want stressed:
+Instead of marker comments, make small functional changes to the files you want buggered:
 - Add a console.log
 - Update a comment
 - Refactor a variable name
@@ -72,13 +72,13 @@ Instead of marker comments, make small functional changes to the files you want 
 ### Example Structure
 
 ```
-my-stresst-app/
+my-buggr-app/
 ├── src/
 │   ├── components/
-│   │   ├── UserCard.tsx      // stresst: add marker here
-│   │   └── ProductList.tsx   // stresst: add marker here
+│   │   ├── UserCard.tsx      // buggr: add marker here
+│   │   └── ProductList.tsx   // buggr: add marker here
 │   ├── utils/
-│   │   └── calculations.ts   // stresst: add marker here
+│   │   └── calculations.ts   // buggr: add marker here
 │   └── App.tsx
 ├── package.json
 └── README.md
@@ -88,7 +88,7 @@ my-stresst-app/
 
 ## Step 3: Commit Your Changes
 
-Create a commit that includes all the files you want to stress:
+Create a commit that includes all the files you want to bugger:
 
 ```bash
 # Stage files you marked
@@ -97,35 +97,35 @@ git add src/components/ProductList.tsx
 git add src/utils/calculations.ts
 
 # Create a descriptive commit
-git commit -m "feat: prepare files for stress testing"
+git commit -m "feat: prepare files for bug testing"
 ```
 
-> **Important:** Only files in this commit will be candidates for bug injection. If you want to stress `App.tsx`, make sure it's modified in your commit.
+> **Important:** Only files in this commit will be candidates for bug injection. If you want to bugger `App.tsx`, make sure it's modified in your commit.
 
 ---
 
 ## Step 4: Push to GitHub
 
-Your repository needs to be on GitHub for stresst to access it:
+Your repository needs to be on GitHub for Buggr to access it:
 
 ```bash
 # If you haven't already, create a GitHub repo and add the remote
-git remote add origin https://github.com/YOUR_USERNAME/my-stresst-app.git
+git remote add origin https://github.com/YOUR_USERNAME/my-buggr-app.git
 
 # Push your branch
 git push -u origin main
 ```
 
-Make sure your repository is **not private** or that you've granted stresst access to your private repos during OAuth.
+Make sure your repository is **not private** or that you've granted Buggr access to your private repos during OAuth.
 
 ---
 
-## Step 5: Launch stresst
+## Step 5: Launch Buggr
 
-### Start the stresst Development Server
+### Start the Buggr Development Server
 
 ```bash
-cd /path/to/stresst
+cd /path/to/buggr
 npm run dev
 ```
 
@@ -136,7 +136,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Step 6: Connect Your GitHub Account
 
 1. Click **"Sign in with GitHub"**
-2. Authorize stresst to access your repositories
+2. Authorize Buggr to access your repositories
 3. You'll be redirected to the dashboard
 
 ![Sign in flow](https://via.placeholder.com/600x300?text=Sign+in+with+GitHub)
@@ -148,7 +148,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ### 7.1 Choose Your Repository
 
 1. Use the **Repository** dropdown
-2. Find and select `my-stresst-app` (or your repo name)
+2. Find and select `my-buggr-app` (or your repo name)
 
 ### 7.2 Choose Your Branch
 
@@ -158,30 +158,30 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ### 7.3 Select Your Commit
 
 1. The commit list shows recent commits
-2. Find the commit you created in Step 3 (e.g., "feat: prepare files for stress testing")
+2. Find the commit you created in Step 3 (e.g., "feat: prepare files for bug testing")
 3. Click on it to expand and see the files changed
 
 You should see the files you marked listed in the commit details.
 
 ---
 
-## Step 8: Stress the Commit
+## Step 8: Bugger the Commit
 
-### 8.1 Open the Stress Panel
+### 8.1 Open the Bugger Panel
 
-Click **"Stress this commit"** (or the 🔥 button) on your selected commit.
+Click **"Bugger up this commit"** (or the 🔥 button) on your selected commit.
 
-### 8.2 Configure Your Stress Test
+### 8.2 Configure Your Bug Session
 
 | Setting | Description | Recommendation |
 |---------|-------------|----------------|
-| **Branch Name** | Name for the stressed branch | Use default or add a suffix like `-round1` |
-| **Stress Level** | Number and difficulty of bugs | Start with **Low** for your first time |
+| **Branch Name** | Name for the buggered branch | Use default or add a suffix like `-round1` |
+| **Bug Level** | Number and difficulty of bugs | Start with **Low** for your first time |
 | **Focus Area** | Optional: specific things to test | Leave blank or try "data handling" |
 
-### 8.3 Create the Stressed Branch
+### 8.3 Create the Buggered Branch
 
-Click **"Create & Stress"**
+Click **"Create & Bugger"**
 
 Wait for the AI to:
 1. Analyze your code
@@ -202,11 +202,11 @@ Once complete, you'll see a **Bug Report** with symptoms like:
 
 ---
 
-## Step 9: Navigate to the Stressed Branch
+## Step 9: Navigate to the Buggered Branch
 
-### Option A: Use stresst's Branch Viewer
+### Option A: Use Buggr's Branch Viewer
 
-1. Click **"Show Stressed Branch"** in stresst
+1. Click **"Show Buggered Branch"** in Buggr
 2. Look for commits starting with 🔥 — these contain the bugs
 3. Review the changes to understand what was modified
 
@@ -214,13 +214,13 @@ Once complete, you'll see a **Bug Report** with symptoms like:
 
 ```bash
 # Navigate to your app directory
-cd /path/to/my-stresst-app
+cd /path/to/my-buggr-app
 
 # Fetch the new branch
 git fetch origin
 
-# Check out the stressed branch
-git checkout stresst-<your-branch-name>
+# Check out the buggered branch
+git checkout buggr-<your-branch-name>
 ```
 
 ---
@@ -229,7 +229,7 @@ git checkout stresst-<your-branch-name>
 
 ### Start Your App on a Different Port
 
-To avoid conflicts with stresst (running on port 3000), run your app on a different port:
+To avoid conflicts with Buggr (running on port 3000), run your app on a different port:
 
 ```bash
 # For Next.js
@@ -246,7 +246,7 @@ npm run dev -- --port 3001
 
 Navigate to [http://localhost:3001](http://localhost:3001)
 
-🎉 **Your app is now broken by stresst!**
+🎉 **Your app is now broken by Buggr!**
 
 ---
 
@@ -277,17 +277,17 @@ git commit -am "done - fixed all bugs"
 git push
 ```
 
-Return to stresst and click **"Check Score"** to see your grade!
+Return to Buggr and click **"Check Score"** to see your grade!
 
 ---
 
 ## Tips for Success
 
-### For Creating Stress-Testable Code
+### For Creating Bug-Testable Code
 
 - ✅ **Keep files focused** — One component/function per file is easier to debug
 - ✅ **Include variety** — Mix UI components, utilities, and data handling
-- ✅ **Make it functional first** — The app should work before you stress it
+- ✅ **Make it functional first** — The app should work before you bugger it
 - ✅ **Start small** — 3-5 files is ideal for learning
 
 ### For Debugging
@@ -295,13 +295,13 @@ Return to stresst and click **"Check Score"** to see your grade!
 - 🔍 **Read error messages carefully** — They often point to the bug location
 - 🔍 **Use console.log** — Add logging to trace data flow
 - 🔍 **Compare with original** — The original branch shows working code
-- 🔍 **Check the bug categories** — stresst injects specific bug types (off-by-one, null checks, etc.)
+- 🔍 **Check the bug categories** — Buggr injects specific bug types (off-by-one, null checks, etc.)
 
 ### For Teams
 
 - 👥 **Share the bug report** — Send it to a colleague without showing them the code changes
 - 👥 **Time the challenge** — See who can fix bugs fastest
-- 👥 **Rotate roles** — Take turns creating stress tests and solving them
+- 👥 **Rotate roles** — Take turns creating bug sessions and solving them
 
 ---
 
@@ -310,22 +310,22 @@ Return to stresst and click **"Check Score"** to see your grade!
 ### "No repositories found"
 
 - Make sure you've pushed your repo to GitHub
-- Check that you authorized stresst to access your repositories
+- Check that you authorized Buggr to access your repositories
 - For private repos, ensure you granted private repo access
 
 ### "No commits found"
 
 - Verify your branch has commits
 - Push your latest commits: `git push origin main`
-- Refresh the stresst page
+- Refresh the Buggr page
 
-### "Stress generation failed"
+### "Bug generation failed"
 
 - Check that you have a valid API key configured
 - Verify the files in your commit aren't too large (>10KB files may timeout)
 - Try with fewer files or smaller files
 
-### App won't start after stressing
+### App won't start after buggering
 
 - The bugs are designed to cause runtime errors, not syntax errors
 - If you see syntax errors, report an issue — this shouldn't happen
@@ -335,7 +335,7 @@ Return to stresst and click **"Check Score"** to see your grade!
 
 ## Next Steps
 
-- 📚 Try **Medium** and **High** stress levels for harder challenges
+- 📚 Try **Medium** and **High** bug levels for harder challenges
 - 🎯 Use **Focus Areas** to target specific bug types
 - 🦙 Set up a [local LLM](LOCAL_LLM_SETUP.md) to avoid API costs
 - 🏆 Challenge your team and track scores
@@ -347,16 +347,16 @@ Return to stresst and click **"Check Score"** to see your grade!
 ```bash
 # Your app setup
 cd my-app
-# ... make changes to files you want stressed ...
+# ... make changes to files you want buggered ...
 git add .
-git commit -m "feat: files ready for stress testing"
+git commit -m "feat: files ready for bug testing"
 git push origin main
 
-# After stressing in stresst UI
+# After buggering in Buggr UI
 git fetch origin
-git checkout stresst-<branch-name>
+git checkout buggr-<branch-name>
 npm run dev -- -p 3001  # Run on different port
 ```
 
-Happy debugging! 🔥
+Happy debugging! 🐛
 

@@ -5,7 +5,7 @@ import { deleteBranch } from "@/lib/github";
 /**
  * DELETE /api/github/branches/delete-all
  * 
- * Deletes all branches that include "stresst-" in their name.
+ * Deletes all branches that include "buggr-" in their name.
  * Requires owner and repo in the request body.
  */
 export async function DELETE(request: NextRequest) {
@@ -46,14 +46,14 @@ export async function DELETE(request: NextRequest) {
 
     const branches = await branchesResponse.json();
 
-    // Filter to only stresst- branches
-    const stresstBranches = branches
-      .filter((branch: { name: string }) => branch.name.includes("stresst-"))
+    // Filter to only buggr- branches
+    const buggrBranches = branches
+      .filter((branch: { name: string }) => branch.name.includes("buggr-"))
       .map((branch: { name: string }) => branch.name);
 
-    if (stresstBranches.length === 0) {
+    if (buggrBranches.length === 0) {
       return NextResponse.json({
-        message: "No stresst- branches found",
+        message: "No buggr- branches found",
         deleted: [],
         count: 0,
       });
@@ -62,7 +62,7 @@ export async function DELETE(request: NextRequest) {
     // Delete each branch
     const results: { branch: string; success: boolean; error?: string }[] = [];
 
-    for (const branchName of stresstBranches) {
+    for (const branchName of buggrBranches) {
       try {
         await deleteBranch(session.accessToken, owner, repo, branchName);
         results.push({ branch: branchName, success: true });
@@ -78,11 +78,11 @@ export async function DELETE(request: NextRequest) {
     const successCount = results.filter((r) => r.success).length;
 
     return NextResponse.json({
-      message: `Deleted ${successCount} of ${stresstBranches.length} stresst- branches`,
+      message: `Deleted ${successCount} of ${buggrBranches.length} buggr- branches`,
       deleted: results.filter((r) => r.success).map((r) => r.branch),
       failed: results.filter((r) => !r.success),
       count: successCount,
-      total: stresstBranches.length,
+      total: buggrBranches.length,
     });
   } catch (error) {
     console.error("Error deleting branches:", error);

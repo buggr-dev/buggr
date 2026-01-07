@@ -34,8 +34,8 @@ function StepIcon({ icon }: { icon: string | undefined }) {
 }
 
 /**
- * Displays the stress process steps in a visual timeline format.
- * Used on the landing page to illustrate what happens during the stress process.
+ * Displays the buggr process steps in a visual timeline format.
+ * Used on the landing page to illustrate what happens during the buggering process.
  */
 export function StressProcessSteps() {
   return (

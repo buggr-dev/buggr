@@ -10,7 +10,7 @@ const MAX_FILE_LINES_MULTIPLE = 2000; // If multiple files, limit to 2000 lines 
 /**
  * POST /api/github/stress
  * 
- * Uses AI to introduce subtle breaking changes to files that were modified in a commit.
+ * Uses AI to bugger up files that were modified in a commit with subtle breaking changes.
  * Requires owner, repo, branch, and files (array of file paths) in the request body.
  * 
  * Randomly selects ONE file from the provided files and applies all bugs to that single file.
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const results: { file: string; success: boolean; changes?: string[]; symptoms?: string[]; error?: string }[] = [];
     const allSymptoms: string[] = [];
 
-    // Supported file extensions for stress testing
+    // Supported file extensions for buggering
     const SUPPORTED_EXTENSIONS = [
       // JavaScript/TypeScript
       "ts", "tsx", "js", "jsx", "mjs", "cjs",
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
         results.push({ 
           file: file.filePath, 
           success: false, 
-          error: "Not selected for stress testing" 
+          error: "Not selected for buggering" 
         });
       }
     }
@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
             repo,
             filePath,
             modifiedContent,
-            `🔥 ${filePath} is stressed out`,
+            `🔥 ${filePath} is buggered up`,
             sha,
             branch
           );
@@ -263,7 +263,7 @@ export async function POST(request: NextRequest) {
         bugCount: totalBugCount,
         createdAt: new Date().toISOString(),
         symptoms: uniqueSymptoms,
-        filesStressed: successfulResults.map((r) => r.file),
+        filesBuggered: successfulResults.map((r) => r.file),
         changes: allChanges,
         originalCommitSha: originalCommitSha || "",
         owner,
@@ -280,14 +280,14 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: `${successCount} of ${files.length} files have been stressed out`,
+      message: `${successCount} of ${files.length} files have been buggered up`,
       results,
       symptoms: uniqueSymptoms,
     });
   } catch (error) {
-    console.error("Error introducing stress:", error);
+    console.error("Error buggering up code:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to introduce stress" },
+      { error: error instanceof Error ? error.message : "Failed to bugger up code" },
       { status: 500 }
     );
   }

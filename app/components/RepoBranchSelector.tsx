@@ -229,8 +229,8 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
         handleCommitSelect(data[0]);
       }
 
-      // Fetch stress metadata for stresst branches
-      if (branchName.includes("stresst-")) {
+      // Fetch stress metadata for buggr branches
+      if (branchName.includes("buggr-")) {
         setLoadingMetadata(true);
         try {
           const metadata = await fetchStressMetadata(accessToken, selectedRepo.owner.login, selectedRepo.name, branchName);
@@ -278,13 +278,13 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
   }
 
   /**
-   * Creates a new branch from the selected commit and automatically introduces stress.
+   * Creates a new branch from the selected commit and automatically buggers it up.
    */
   async function handleCreateBranch(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedRepo || !selectedCommit || !selectedBranch || !commitDetails?.files) return;
 
-    const base = `stresst-${selectedBranch}-${timestamp}`;
+    const base = `buggr-${selectedBranch}-${timestamp}`;
     const fullBranchName = branchSuffix.trim() ? `${base}-${branchSuffix.trim()}` : base;
 
     // Filter out removed files, sort by most changes, and limit based on stress level
@@ -299,7 +299,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
     const availableFiles = commitDetails.files.filter((f) => f.status !== "removed");
     
     if (availableFiles.length === 0) {
-      setError("No files available to introduce stress to");
+      setError("No files available to bugger up");
       return;
     }
 
@@ -411,7 +411,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
 
       if (!stressResponse.ok) {
         setBranchSuccess(fullBranchName);
-        setError(`Branch created, but stress failed: ${stressData.error || "Unknown error"}`);
+        setError(`Branch created, but buggering failed: ${stressData.error || "Unknown error"}`);
       } else {
         setBranchSuccess(fullBranchName);
 
@@ -539,9 +539,9 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
   }
 
   /**
-   * Deletes all branches that include "stresst-" in their name.
+   * Deletes all branches that include "buggr-" in their name.
    */
-  async function handleDeleteAllStressedBranches() {
+  async function handleDeleteAllBuggeredBranches() {
     if (!selectedRepo) return;
 
     setDeletingAllBranches(true);
@@ -585,7 +585,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
         setError(null);
         // Could show a success message here if needed
       } else {
-        setError("No stresst- branches found to delete");
+        setError("No buggr- branches found to delete");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete branches");
@@ -615,7 +615,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
             <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
               <GitHubIcon className="h-5 w-5 text-white" />
             </div>
-            <h1 className="font-mono text-xl font-bold text-white">stresst</h1>
+            <h1 className="font-mono text-xl font-bold text-white">Buggr</h1>
           </div>
           <NotesPanel />
         </div>
@@ -686,12 +686,12 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
               Clear selection
             </TextButton>
 
-            {branches.some((b) => b.name.includes("stresst-")) && (
+            {branches.some((b) => b.name.includes("buggr-")) && (
               <>
                 {showDeleteAllConfirm ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gh-danger-fg">Delete all {branches.filter((b) => b.name.includes("stresst-")).length} stressed branches?</span>
-                    <Button variant="danger" size="sm" onClick={handleDeleteAllStressedBranches} disabled={deletingAllBranches}>
+                    <span className="text-xs text-gh-danger-fg">Delete all {branches.filter((b) => b.name.includes("buggr-")).length} buggered branches?</span>
+                    <Button variant="danger" size="sm" onClick={handleDeleteAllBuggeredBranches} disabled={deletingAllBranches}>
                       {deletingAllBranches ? "Deleting..." : "Yes"}
                     </Button>
                     <TextButton onClick={() => setShowDeleteAllConfirm(false)} disabled={deletingAllBranches}>
@@ -701,7 +701,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
                 ) : (
                   <TextButton variant="danger" onClick={() => setShowDeleteAllConfirm(true)} disabled={deletingAllBranches}>
                     <TrashIcon className="h-3.5 w-3.5" />
-                    Delete all stressed branches
+                    Delete all buggered branches
                   </TextButton>
                 )}
               </>
@@ -723,7 +723,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
                 Recent commits on <span className="font-mono text-white">{selectedBranch}</span>
               </h3>
 
-              {selectedBranch.includes("stresst-") && (
+              {selectedBranch.includes("buggr-") && (
                 <div className="flex items-center gap-2">
                   {showDeleteConfirm ? (
                     <div className="flex items-center gap-2">
@@ -842,7 +842,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
                 </a>
               )}
 
-              {selectedBranch && selectedBranch.includes("stresst-") && !showCreateBranch && (
+              {selectedBranch && selectedBranch.includes("buggr-") && !showCreateBranch && (
                 <Button variant="secondary" onClick={handleCopyBranchLink} title="Copy branch link to share">
                   {copiedBranchLink ? (
                     <>
@@ -858,7 +858,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
                 </Button>
               )}
 
-              {selectedBranch && selectedBranch.includes("stresst-") && !showCreateBranch && (
+              {selectedBranch && selectedBranch.includes("buggr-") && !showCreateBranch && (
                 <div className="group relative">
                   <Button
                     variant={canCheckScore ? "primary" : "secondary"}
@@ -894,7 +894,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
                     setTimestamp(generateTimestamp());
                   }}>
                   <LightningIcon className="h-4 w-4" />
-                  Stress out this commit
+                  Bugger up this commit
                 </Button>
               )}
             </div>

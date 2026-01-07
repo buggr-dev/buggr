@@ -64,8 +64,8 @@ export function PublicReposPreview() {
     );
   }
 
-  // Filter out the stresst repo itself
-  const practiceRepos = repos.filter((repo) => repo.name !== "stresst");
+  // Filter out the buggr repo itself
+  const practiceRepos = repos.filter((repo) => repo.name !== "buggr");
 
   if (practiceRepos.length === 0) {
     return (

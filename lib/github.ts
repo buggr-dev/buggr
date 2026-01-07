@@ -313,19 +313,19 @@ export interface GitHubFileContent {
 }
 
 /**
- * Metadata stored in .stresst.json for tracking stress test performance.
+ * Metadata stored in .buggr.json for tracking bug session performance.
  */
 export interface StressMetadata {
-  /** Stress level used: "low", "medium", or "high" */
+  /** Bug level used: "low", "medium", or "high" */
   stressLevel: "low" | "medium" | "high";
   /** Number of bugs introduced */
   bugCount: number;
-  /** ISO timestamp when the stress test was created */
+  /** ISO timestamp when the bug session was created */
   createdAt: string;
   /** User-facing symptom descriptions */
   symptoms: string[];
-  /** Files that were stressed */
-  filesStressed: string[];
+  /** Files that were buggered */
+  filesBuggered: string[];
   /** Technical descriptions of changes made */
   changes: string[];
   /** Original commit SHA that was branched from */
@@ -421,15 +421,15 @@ export async function updateFile(
   return response.json();
 }
 
-/** Path where stress metadata is stored in branches */
-export const STRESS_METADATA_PATH = ".stresst.json";
+/** Path where buggr metadata is stored in branches */
+export const STRESS_METADATA_PATH = ".buggr.json";
 
 /**
- * Creates a stress metadata file in a branch.
- * This file stores information about the stress test for later retrieval (e.g., performance tracking).
+ * Creates a buggr metadata file in a branch.
+ * This file stores information about the bug session for later retrieval (e.g., performance tracking).
  * 
  * @param accessToken - GitHub OAuth access token
- * @param metadata - Stress test metadata to store
+ * @param metadata - Bug session metadata to store
  * @returns Commit result
  */
 export async function createStressMetadata(
@@ -449,7 +449,7 @@ export async function createStressMetadata(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        message: "📊 Add stress test metadata",
+        message: "📊 Add buggr metadata",
         content: Buffer.from(content).toString("base64"),
         branch,
       }),
@@ -465,14 +465,14 @@ export async function createStressMetadata(
 }
 
 /**
- * Fetches stress metadata from a branch.
- * Returns null if the metadata file doesn't exist (branch wasn't created by stresst).
+ * Fetches buggr metadata from a branch.
+ * Returns null if the metadata file doesn't exist (branch wasn't created by Buggr).
  * 
  * @param accessToken - GitHub OAuth access token
  * @param owner - Repository owner (username or org)
  * @param repo - Repository name
  * @param branch - Branch name
- * @returns Stress metadata or null if not found
+ * @returns Buggr metadata or null if not found
  */
 export async function fetchStressMetadata(
   accessToken: string,
@@ -492,7 +492,7 @@ export async function fetchStressMetadata(
     const decodedContent = Buffer.from(fileContent.content, "base64").toString("utf-8");
     return JSON.parse(decodedContent) as StressMetadata;
   } catch {
-    // File doesn't exist or couldn't be parsed - this branch wasn't created by stresst
+    // File doesn't exist or couldn't be parsed - this branch wasn't created by Buggr
     return null;
   }
 }

@@ -1,4 +1,4 @@
-# 🔥 stresst
+# 🐛 Buggr
 
 **Insurance against vibe coding**
 
@@ -6,13 +6,13 @@ AI code generation is everywhere. Cursor, Copilot, ChatGPT — developers are sh
 
 When the AI-generated code breaks (and it will), can your team debug it? Or are they just prompting until the errors go away?
 
-**stresst** is a training tool that stress-tests developer comprehension. It uses AI to introduce realistic, subtle bugs into real codebases — the kind of bugs that require *actual understanding* to find and fix. No amount of "please fix" prompts will help.
+**Buggr** is a training tool that tests developer comprehension. It uses AI to bugger up real codebases with realistic, subtle bugs — the kind of bugs that require *actual understanding* to find and fix. No amount of "please fix" prompts will help.
 
 <p align="center">
-  <img src="public/screenshots/screenshot-bug-report-showing-min.png" alt="stresst interface showing bug reports" width="100%" />
+  <img src="public/screenshots/screenshot-bug-report-showing-min.png" alt="Buggr interface showing bug reports" width="100%" />
 </p>
 
-### Why stresst?
+### Why Buggr?
 
 - 🛡️ **Verify comprehension** — Ensure developers understand the code they're shipping, not just generating
 - 🔍 **Build debugging muscle** — AI can write code, but debugging is still a human skill
@@ -22,15 +22,15 @@ When the AI-generated code breaks (and it will), can your team debug it? Or are 
 
 ## How It Works
 
-1. **Connect your GitHub account** — stresst uses OAuth to access your repositories
-2. **Select a repository and branch** — choose the code you want to stress
+1. **Connect your GitHub account** — Buggr uses OAuth to access your repositories
+2. **Select a repository and branch** — choose the code you want to bugger up
 3. **Pick a commit** — select which files to introduce bugs into
-4. **Configure stress level** — Low (2 bugs 1 file), Medium (4 bugs 2 files), or High (6 bugs 3 files)
-5. **Create stressed branch** — AI analyzes your code and introduces realistic bugs
+4. **Configure bug level** — Low (2 bugs 1 file), Medium (4 bugs 2 files), or High (6 bugs 3 files)
+5. **Create buggered branch** — AI analyzes your code and introduces realistic bugs
 6. **Share with your team** — send the bug report to a colleague to debug
 
 <p align="center">
-  <img src="public/screenshots/screenshot-select-commit-to-stress-min.png" alt="Selecting a commit and configuring stress level" width="100%" />
+  <img src="public/screenshots/screenshot-select-commit-to-stress-min.png" alt="Selecting a commit and configuring bug level" width="100%" />
 </p>
 
 ## Features
@@ -44,7 +44,7 @@ Uses Claude AI to introduce subtle, realistic bugs that developers actually make
 - Missing error handling
 - And many more...
 
-### 📊 Configurable Stress Levels
+### 📊 Configurable Bug Levels
 - **🌱 Low** — 2 straightforward bugs, easier to spot
 - **🔥 Medium** — 4 subtle bugs, requires careful review
 - **💀 High** — 6 devious bugs, may include spaghetti code
@@ -62,11 +62,11 @@ Automatic notifications with user-friendly symptom descriptions:
 Copy bug reports to clipboard to share with colleagues via email or Slack
 
 ### 🗑️ Branch Management
-Delete stressed branches when you're done to keep your repository clean
+Delete buggered branches when you're done to keep your repository clean
 
 ## Getting Started
 
-> 📖 **New to stresst?** Check out the [step-by-step Getting Started guide](docs/GETTING_STARTED.md) for a complete walkthrough with your own repository.
+> 📖 **New to Buggr?** Check out the [step-by-step Getting Started guide](docs/GETTING_STARTED.md) for a complete walkthrough with your own repository.
 
 ### Prerequisites
 
@@ -100,7 +100,7 @@ NEXT_PUBLIC_FILE_SELECTION_MODE=most_changes
 
 ### 🦙 Using a Local LLM (Free Alternative)
 
-Don't want to pay for API calls? You can run stresst with a local LLM using Ollama or any OpenAI-compatible server.
+Don't want to pay for API calls? You can run Buggr with a local LLM using Ollama or any OpenAI-compatible server.
 
 **Quick start with Ollama:**
 
@@ -122,7 +122,7 @@ export AI_MODEL=llama3
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
 3. Fill in the details:
-   - **Application name**: stresst (or your preferred name)
+   - **Application name**: Buggr (or your preferred name)
    - **Homepage URL**: `http://localhost:3000`
    - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
 4. Copy the Client ID and Client Secret to your `.env.local`
@@ -131,8 +131,8 @@ export AI_MODEL=llama3
 
 ```bash
 # Clone the repository
-git clone https://github.com/brenoneill/stresst.git
-cd stresst
+git clone https://github.com/brenoneill/buggr.git
+cd buggr
 
 # Install dependencies
 npm install
@@ -145,40 +145,40 @@ Open [http://localhost:3000](http://localhost:3000) to get started.
 
 ## Usage
 
-### Creating a Stressed Branch
+### Creating a Buggered Branch
 
 1. Sign in with your GitHub account
 2. Select a repository from the dropdown
-3. Choose a branch to base the stressed version on
+3. Choose a branch to base the buggered version on
 4. Click on a commit to see the changed files
-5. Click "Stress out this commit"
+5. Click "Bugger up this commit"
 6. Configure:
    - Branch name suffix (optional)
-   - Stress level (Low/Medium/High)
+   - Bug level (Low/Medium/High)
    - Focus area (optional)
-7. Click "Create & Stress"
+7. Click "Create & Bugger"
 8. Wait for the AI to introduce bugs
 9. Share the bug report with your team!
 
 <p align="center">
-  <img src="public/screenshots/screenshot-stressing-code-min.png" alt="AI stressing code in progress" width="100%" />
+  <img src="public/screenshots/screenshot-stressing-code-min.png" alt="AI buggering up code in progress" width="100%" />
 </p>
 
 ### Playing the Game
 
-Once you have a stressed branch to debug:
+Once you have a buggered branch to debug:
 
-1. **Clone the stressed branch** to your local machine
+1. **Clone the buggered branch** to your local machine
 2. **Start the timer** — Make a commit with `start` in the message (e.g., "start debugging")
 3. **Find and fix the bugs** — Review the code, identify issues, and make your fixes
 4. **Stop the timer** — Make a commit with `done`, `complete`, `end`, or `stop` in the message
-5. **Check your score** — Return to stresst and click "Check Score" to see your grade
+5. **Check your score** — Return to Buggr and click "Check Score" to see your grade
 
 The scoring system tracks the time between your start and completion commits, then grades you based on the difficulty level:
 
 ### 🏆 Scoring System
 
-Once you've fixed the bugs and committed your changes, return to stresst to check your score. The system automatically detects your start and completion commits and grades you based on how quickly you fixed all the bugs.
+Once you've fixed the bugs and committed your changes, return to Buggr to check your score. The system automatically detects your start and completion commits and grades you based on how quickly you fixed all the bugs.
 
 <p align="center">
   <img src="public/screenshots/screenshot-scorecard.png" alt="Scorecard showing grade and time taken" width="100%" />
@@ -202,17 +202,17 @@ Once you've fixed the bugs and committed your changes, return to stresst to chec
 
 ### Finding the Bugs
 
-Once a stressed branch is created:
+Once a buggered branch is created:
 
-1. Click "Show Stressed Branch" to view the commits
+1. Click "Show Buggered Branch" to view the commits
 2. Look for commits starting with "🔥" — these contain the bugs
 3. Review the code changes and try to identify what's wrong
 4. Compare with the original branch to verify your findings
 
 ### Cleaning Up
 
-To delete a stressed branch:
-1. Select the stressed branch
+To delete a buggered branch:
+1. Select the buggered branch
 2. Click the "Delete" button next to the branch name
 3. Confirm the deletion
 
@@ -227,7 +227,7 @@ To delete a stressed branch:
 ## Project Structure
 
 ```
-stresst/
+buggr/
 ├── app/
 │   ├── api/
 │   │   ├── auth/          # NextAuth.js routes
@@ -237,7 +237,7 @@ stresst/
 │   ├── layout.tsx         # Root layout
 │   └── page.tsx           # Home page
 ├── lib/
-│   ├── ai-stress.ts       # AI bug generation logic
+│   ├── ai-buggr.ts        # AI bug generation logic
 │   ├── github.ts          # GitHub API utilities
 │   └── score-config.ts    # Scoring thresholds configuration
 ├── auth.ts                # NextAuth.js configuration
