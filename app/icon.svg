@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Head - small circle at top with antennae -->
+  <circle cx="12" cy="5" r="2.5" />
+  <!-- Left antenna -->
+  <path d="M10 3.5 L8 1.5" />
+  <!-- Right antenna -->
+  <path d="M14 3.5 L16 1.5" />
+  
+  <!-- Middle body segment - medium ellipse -->
+  <ellipse cx="12" cy="11" rx="3.5" ry="3" />
+  
+  <!-- Bottom/rear segment - larger ellipse -->
+  <ellipse cx="12" cy="18.5" rx="4.5" ry="3.5" />
+</svg>
+
