@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { GitHubCommit, StressMetadata } from "@/lib/github";
 import { Button } from "@/app/components/inputs/Button";
-import { TrophyIcon, CloseIcon, BuggrIcon } from "@/app/components/icons";
+import { CloseIcon, BuggrIcon, SparklesIcon } from "@/app/components/icons";
 import {
   calculateScoreRating,
   DIFFICULTY_CONFIG,
@@ -102,6 +102,14 @@ export function ScorePanel({
 
   const bugCount = stressMetadata?.bugCount || 1;
 
+  /**
+   * Handles the analyze code action.
+   * TODO: Implement actual analysis logic
+   */
+  const handleAnalyzeCode = () => {
+    console.log("Analyzing code...");
+  };
+
   return (
     <div className={`flex h-full flex-col gap-6 overflow-y-auto pt-10 transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}>
       {/* Main Score Card */}
@@ -179,10 +187,21 @@ export function ScorePanel({
         </div>
       </div>
 
+      {/* Analyze Button */}
+      <div 
+        className={`transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+        style={{ transitionDelay: "900ms" }}
+      >
+        <Button variant="primary" className="w-full" onClick={handleAnalyzeCode}>
+          <SparklesIcon className="h-4 w-4" />
+          Analyze Code
+        </Button>
+      </div>
+
       {/* Timeline - Compact */}
       <div 
         className={`space-y-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-        style={{ transitionDelay: "900ms" }}
+        style={{ transitionDelay: "1000ms" }}
       >
         <h3 className="text-xs font-semibold tracking-wide text-gh-text-muted uppercase">Timeline</h3>
         
@@ -190,7 +209,7 @@ export function ScorePanel({
           {/* Start */}
           <div 
             className={`flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
-            style={{ transitionDelay: "1000ms" }}
+            style={{ transitionDelay: "1100ms" }}
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/20">
               <span className="text-sm">🚀</span>
@@ -212,14 +231,14 @@ export function ScorePanel({
           <div className="flex justify-center">
             <div 
               className={`w-0.5 bg-gh-border transition-all duration-300 ease-out ${isVisible ? "h-4" : "h-0"}`}
-              style={{ transitionDelay: "1100ms" }}
+              style={{ transitionDelay: "1200ms" }}
             />
           </div>
 
           {/* Complete */}
           <div 
             className={`flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
-            style={{ transitionDelay: "1150ms" }}
+            style={{ transitionDelay: "1250ms" }}
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/20">
               <span className="text-sm">✅</span>
@@ -242,7 +261,7 @@ export function ScorePanel({
       {/* Footer */}
       <div 
         className={`mt-auto pt-4 border-t border-gh-border transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        style={{ transitionDelay: "1250ms" }}
+        style={{ transitionDelay: "1350ms" }}
       >
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={onClose}>
