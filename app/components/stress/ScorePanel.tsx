@@ -127,6 +127,7 @@ export function ScorePanel({
           owner: stressMetadata.owner,
           repo: stressMetadata.repo,
           sha: completeCommit.sha,
+          stressMetadata,
         }),
       });
 
@@ -158,6 +159,8 @@ export function ScorePanel({
         return <span className="text-sm">⚠️</span>;
       case "hint":
         return <LightbulbIcon className="h-4 w-4 text-yellow-400" />;
+      case "tip":
+        return <SparklesIcon className="h-4 w-4 text-purple-400" />;
       case "info":
       default:
         return <InfoIcon className="h-4 w-4 text-blue-400" />;
@@ -178,6 +181,8 @@ export function ScorePanel({
         return "bg-yellow-500/10 border-yellow-500/30";
       case "hint":
         return "bg-amber-500/10 border-amber-500/30";
+      case "tip":
+        return "bg-purple-500/10 border-purple-500/30";
       case "info":
       default:
         return "bg-blue-500/10 border-blue-500/30";
@@ -321,8 +326,15 @@ export function ScorePanel({
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-white">{item.title}</p>
                       <p className="text-xs text-gh-text-muted mt-1">{item.message}</p>
+                      {/* Show improvement suggestion for tips */}
+                      {item.improvement && (
+                        <div className="mt-2 rounded-md bg-gh-canvas-default/50 p-2">
+                          <p className="text-xs font-medium text-purple-300 mb-1">💡 Better approach:</p>
+                          <p className="text-xs text-gh-text-secondary">{item.improvement}</p>
+                        </div>
+                      )}
                       {item.file && (
-                        <code className="mt-1 inline-block rounded bg-gh-canvas-default px-1.5 py-0.5 font-mono text-xs text-gh-accent">
+                        <code className="mt-2 inline-block rounded bg-gh-canvas-default px-1.5 py-0.5 font-mono text-xs text-gh-accent">
                           {item.file}
                         </code>
                       )}

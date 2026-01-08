@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { fetchCommitDetails, GitHubCommitFile } from "@/lib/github";
+import { fetchCommitDetails, StressMetadata } from "@/lib/github";
+import { generateText, LanguageModel } from "ai";
 
 /**
  * Feedback item returned by the analysis.
  */
 export interface AnalysisFeedback {
-  type: "success" | "warning" | "info" | "hint";
+  type: "success" | "warning" | "info" | "hint" | "tip";
   title: string;
   message: string;
   file?: string;
+  /** Optional improvement suggestion for "tip" type feedback */
+  improvement?: string;
 }
 
 /**
@@ -21,145 +24,294 @@ export interface AnalyzeResponse {
   isPerfect: boolean;
 }
 
+/** Supported AI providers */
+type AIProvider = "anthropic" | "ollama" | "openai-compatible";
+
 /**
- * Analyzes a code patch for common issues like:
- * - Functions that were left but do nothing (pass-through functions)
- * - Unnecessary code left behind
- * - Empty functions or commented out code
- * 
- * @param file - The file with patch data to analyze
- * @returns Array of feedback items for this file
+ * Custom error class for AI analysis failures.
  */
-function analyzeFilePatch(file: GitHubCommitFile): AnalysisFeedback[] {
-  const feedback: AnalysisFeedback[] = [];
-  const patch = file.patch || "";
-  
-  // Skip if no patch data
-  if (!patch) {
-    return feedback;
+class AIAnalysisError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = "AIAnalysisError";
   }
+}
 
-  // Extract added lines (lines starting with +)
-  const addedLines = patch
-    .split("\n")
-    .filter((line) => line.startsWith("+") && !line.startsWith("+++"))
-    .map((line) => line.substring(1));
+/**
+ * Resolves the AI provider to use based on environment variables.
+ * Priority: AI_PROVIDER env var > auto-detect based on available keys > anthropic
+ * 
+ * @returns The configured AI provider
+ */
+function resolveAIProvider(): AIProvider {
+  const explicitProvider = process.env.AI_PROVIDER?.toLowerCase();
   
-  // Extract removed lines (lines starting with -)
-  const removedLines = patch
-    .split("\n")
-    .filter((line) => line.startsWith("-") && !line.startsWith("---"))
-    .map((line) => line.substring(1));
-
-  // Check for pass-through functions (function that just returns its input)
-  // Pattern: function that takes input and returns it unchanged
-  const passThroughPattern = /function\s+(\w+)\s*\([^)]*\)\s*{\s*return\s+\w+;?\s*}/;
-  const arrowPassThroughPattern = /const\s+(\w+)\s*=\s*\([^)]*\)\s*=>\s*\w+;?/;
+  if (explicitProvider === "ollama") return "ollama";
+  if (explicitProvider === "openai-compatible") return "openai-compatible";
+  if (explicitProvider === "anthropic") return "anthropic";
   
-  const addedCode = addedLines.join("\n");
+  // Auto-detect based on available configuration
+  if (process.env.AI_PROVIDER === "ollama" || (process.env.AI_MODEL && process.env.AI_PROVIDER !== "anthropic" && !process.env.ANTHROPIC_API_KEY)) return "ollama";
+  if (process.env.OPENAI_COMPATIBLE_BASE_URL) return "openai-compatible";
   
-  const passThroughMatch = addedCode.match(passThroughPattern);
-  if (passThroughMatch) {
-    feedback.push({
-      type: "warning",
-      title: "Pass-through function detected",
-      message: `The function '${passThroughMatch[1]}' appears to just return its input without doing anything. Consider removing it entirely if it's not needed.`,
-      file: file.filename,
-    });
-  }
+  // Default to Anthropic
+  return "anthropic";
+}
 
-  const arrowPassThroughMatch = addedCode.match(arrowPassThroughPattern);
-  if (arrowPassThroughMatch && !passThroughMatch) {
-    feedback.push({
-      type: "warning",
-      title: "Pass-through function detected",
-      message: `The function '${arrowPassThroughMatch[1]}' appears to just return its input without doing anything. Consider removing it entirely if it's not needed.`,
-      file: file.filename,
-    });
-  }
-
-  // Check for empty function bodies
-  const emptyFunctionPattern = /function\s+(\w+)\s*\([^)]*\)\s*{\s*}/;
-  const emptyArrowPattern = /const\s+(\w+)\s*=\s*\([^)]*\)\s*=>\s*{\s*}/;
+/**
+ * Creates the appropriate language model based on the configured provider.
+ * Supports Anthropic (default), Ollama, and OpenAI-compatible local servers.
+ * 
+ * @returns Language model instance for the configured provider
+ * @throws AIAnalysisError if the provider dependencies are not available
+ */
+async function createLanguageModel(): Promise<LanguageModel> {
+  const provider = resolveAIProvider();
+  console.log("[Analyze] Using AI provider:", provider);
   
-  const emptyFuncMatch = addedCode.match(emptyFunctionPattern);
-  if (emptyFuncMatch) {
-    feedback.push({
-      type: "warning",
-      title: "Empty function",
-      message: `The function '${emptyFuncMatch[1]}' has an empty body. Did you mean to implement it or remove it?`,
-      file: file.filename,
-    });
-  }
-
-  const emptyArrowMatch = addedCode.match(emptyArrowPattern);
-  if (emptyArrowMatch) {
-    feedback.push({
-      type: "warning",
-      title: "Empty function",
-      message: `The function '${emptyArrowMatch[1]}' has an empty body. Did you mean to implement it or remove it?`,
-      file: file.filename,
-    });
-  }
-
-  // Check for function calls to removed functions
-  // Look for function definitions that were removed
-  const removedFunctionPattern = /function\s+(\w+)/g;
-  const removedCode = removedLines.join("\n");
-  let match;
-  while ((match = removedFunctionPattern.exec(removedCode)) !== null) {
-    const funcName = match[1];
-    // Check if this function is still being called in added code
-    const callPattern = new RegExp(`\\b${funcName}\\s*\\(`);
-    if (callPattern.test(addedCode)) {
-      feedback.push({
-        type: "hint",
-        title: "Function call may be orphaned",
-        message: `You removed the '${funcName}' function but it appears to still be called. Make sure all references are updated.`,
-        file: file.filename,
+  switch (provider) {
+    case "ollama": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let createOpenAICompatible: any;
+      try {
+        const compatModule = await import("@ai-sdk/openai-compatible");
+        createOpenAICompatible = compatModule.createOpenAICompatible;
+      } catch (error) {
+        throw new AIAnalysisError(
+          "OpenAI Compatible SDK not available for Ollama. Please ensure @ai-sdk/openai-compatible is installed.",
+          error
+        );
+      }
+      
+      const baseURL = process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1";
+      const model = process.env.AI_MODEL || "llama3";
+      
+      const ollama = createOpenAICompatible({
+        name: "ollama",
+        baseURL,
+        headers: {
+          Authorization: "Bearer ollama",
+        },
       });
+      
+      return ollama.chatModel(model);
+    }
+    
+    case "openai-compatible": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let createOpenAICompatible: any;
+      try {
+        const compatModule = await import("@ai-sdk/openai-compatible");
+        createOpenAICompatible = compatModule.createOpenAICompatible;
+      } catch (error) {
+        throw new AIAnalysisError(
+          "OpenAI Compatible SDK not available. Please ensure @ai-sdk/openai-compatible is installed.",
+          error
+        );
+      }
+      
+      const baseURL = process.env.OPENAI_COMPATIBLE_BASE_URL;
+      if (!baseURL) {
+        throw new AIAnalysisError(
+          "OPENAI_COMPATIBLE_BASE_URL environment variable is required for openai-compatible provider."
+        );
+      }
+      
+      const model = process.env.OPENAI_COMPATIBLE_MODEL || "default";
+      const apiKey = process.env.OPENAI_COMPATIBLE_API_KEY || "not-needed";
+      
+      const openaiCompatible = createOpenAICompatible({
+        name: "openai-compatible",
+        baseURL,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      });
+      
+      return openaiCompatible.chatModel(model);
+    }
+    
+    case "anthropic":
+    default: {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        throw new AIAnalysisError(
+          "ANTHROPIC_API_KEY environment variable is not set."
+        );
+      }
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let anthropic: any;
+      try {
+        const anthropicModule = await import("@ai-sdk/anthropic");
+        anthropic = anthropicModule.anthropic;
+      } catch (error) {
+        throw new AIAnalysisError(
+          "AI SDK not available. Please ensure @ai-sdk/anthropic is installed.",
+          error
+        );
+      }
+      
+      return anthropic(process.env.AI_MODEL || "claude-sonnet-4-20250514");
     }
   }
+}
 
-  // Check for console.log statements left behind
-  if (addedCode.includes("console.log")) {
-    feedback.push({
-      type: "info",
-      title: "Debug statement found",
-      message: "You left console.log statements in your code. Consider removing them for production code.",
-      file: file.filename,
-    });
+/**
+ * Uses AI to analyze the user's code fix and provide detailed feedback.
+ * 
+ * @param patches - Array of file patches (diffs) from the commit
+ * @param metadata - Optional buggr metadata describing what bugs were introduced
+ * @returns Analysis response with feedback, summary, and isPerfect flag
+ */
+async function analyzeWithAI(
+  patches: { filename: string; patch: string; status: string }[],
+  metadata: StressMetadata | null
+): Promise<AnalyzeResponse> {
+  const model = await createLanguageModel();
+  
+  // Format the patches for the prompt
+  const patchesText = patches
+    .map((p) => `FILE: ${p.filename} (${p.status})\n\`\`\`diff\n${p.patch || "No changes"}\n\`\`\``)
+    .join("\n\n");
+  
+  // Build context about the bugs that were introduced
+  let bugContext = "";
+  if (metadata) {
+    bugContext = `
+## CONTEXT: What bugs were introduced
+
+The user was debugging a "${metadata.stressLevel}" difficulty challenge with ${metadata.bugCount} bug(s).
+
+### Files that were bugged:
+${metadata.filesBuggered.map((f) => `- ${f}`).join("\n")}
+
+### Technical changes that were made (the bugs):
+${metadata.changes.map((c, i) => `${i + 1}. ${c}`).join("\n")}
+
+### Symptoms the bugs caused:
+${metadata.symptoms.map((s, i) => `${i + 1}. ${s}`).join("\n")}
+
+Use this context to evaluate if the user properly fixed ALL the bugs and cleaned up their code.
+`;
   }
+  
+  const prompt = `You are an expert code reviewer analyzing a user's debugging fix. Your job is to:
+1. Evaluate if they correctly fixed the bugs
+2. Point out any issues with their fix (leftover code, incomplete fixes, etc.)
+3. Provide helpful tips on better approaches when applicable
 
-  // Check for TODO/FIXME comments
-  if (/\/\/\s*(TODO|FIXME)/i.test(addedCode)) {
-    feedback.push({
-      type: "info",
-      title: "TODO/FIXME comment found",
-      message: "You have TODO or FIXME comments in your code. Make sure these are intentional.",
-      file: file.filename,
+${bugContext}
+
+## THE USER'S FIX (diff format: + = added lines, - = removed lines)
+
+${patchesText}
+
+## YOUR ANALYSIS
+
+Analyze the code changes and provide feedback. Be helpful and educational, not harsh.
+
+IMPORTANT GUIDELINES:
+- If the fix looks good, say so! Don't invent problems.
+- If they left unnecessary code (like a function that now does nothing), point it out.
+- If their fix works but there's a cleaner/better way, explain it as a "tip" with the improvement.
+- Check if they addressed all the bugged files (if metadata provided).
+- Look for common issues: pass-through functions, commented-out code, debug statements left in.
+
+Respond with ONLY a JSON object in this exact format (no markdown, no explanation):
+{
+  "feedback": [
+    {
+      "type": "success|warning|info|hint|tip",
+      "title": "Short title",
+      "message": "Detailed explanation",
+      "file": "optional/filename.ts",
+      "improvement": "optional - only for 'tip' type - explain the better approach"
+    }
+  ],
+  "summary": "One sentence overall assessment",
+  "isPerfect": true/false
+}
+
+FEEDBACK TYPES:
+- "success": Things the user did well (e.g., "Correctly fixed the comparison operator")
+- "warning": Issues that should be fixed (e.g., "Left a pass-through function that does nothing")
+- "info": Neutral observations (e.g., "This file had bugs that were addressed")
+- "hint": Suggestions that aren't critical (e.g., "Consider removing commented-out code")
+- "tip": "This works, but here's a better way" suggestions with the "improvement" field explaining why
+
+IMPORTANT:
+- Be concise but helpful
+- Provide 2-6 feedback items (don't overwhelm the user)
+- isPerfect should be true only if there are no warnings or hints
+- Always include at least one piece of feedback
+- For tips, the "message" should acknowledge what works, and "improvement" should explain the better approach`;
+
+  try {
+    console.log("[Analyze] Sending to AI for analysis...");
+    const startTime = Date.now();
+    
+    const { text } = await generateText({
+      model,
+      prompt,
     });
+    
+    const duration = Date.now() - startTime;
+    console.log(`[Analyze] AI response received in ${duration}ms`);
+    
+    if (!text || text.trim().length < 20) {
+      throw new AIAnalysisError("AI returned empty or insufficient response");
+    }
+    
+    // Parse the JSON response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error("[Analyze] No JSON found in response:", text.substring(0, 500));
+      throw new AIAnalysisError("Failed to parse AI response - no JSON found");
+    }
+    
+    const parsed = JSON.parse(jsonMatch[0]) as AnalyzeResponse;
+    
+    // Validate the response structure
+    if (!parsed.feedback || !Array.isArray(parsed.feedback)) {
+      throw new AIAnalysisError("Invalid AI response - missing feedback array");
+    }
+    
+    if (typeof parsed.summary !== "string") {
+      parsed.summary = "Analysis complete.";
+    }
+    
+    if (typeof parsed.isPerfect !== "boolean") {
+      parsed.isPerfect = !parsed.feedback.some(
+        (f) => f.type === "warning" || f.type === "hint"
+      );
+    }
+    
+    console.log(`[Analyze] Parsed ${parsed.feedback.length} feedback items`);
+    return parsed;
+    
+  } catch (error) {
+    if (error instanceof AIAnalysisError) {
+      throw error;
+    }
+    console.error("[Analyze] AI analysis error:", error);
+    throw new AIAnalysisError(
+      `AI analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      error
+    );
   }
-
-  // Check for commented out code
-  const commentedCodePattern = /\/\/\s*(const|let|var|function|return|if|for|while)/;
-  if (commentedCodePattern.test(addedCode)) {
-    feedback.push({
-      type: "hint",
-      title: "Commented out code",
-      message: "It looks like you left some code commented out. Consider removing it if it's not needed.",
-      file: file.filename,
-    });
-  }
-
-  return feedback;
 }
 
 /**
  * POST /api/github/analyze
  * 
- * Analyzes the code changes in a commit and provides feedback.
- * Requires owner, repo, and sha in the request body.
+ * Analyzes the code changes in a commit using AI and provides feedback.
+ * Uses the buggr metadata to provide contextual feedback about the fix.
+ * 
+ * @param owner - Repository owner
+ * @param repo - Repository name  
+ * @param sha - Commit SHA to analyze
+ * @param stressMetadata - Optional buggr metadata for contextual analysis
  */
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -173,7 +325,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { owner, repo, sha } = body;
+    const { owner, repo, sha, stressMetadata } = body as {
+      owner: string;
+      repo: string;
+      sha: string;
+      stressMetadata?: StressMetadata;
+    };
 
     if (!owner || !repo || !sha) {
       return NextResponse.json(
@@ -185,53 +342,28 @@ export async function POST(request: NextRequest) {
     // Fetch the commit details including the diff
     const commitDetails = await fetchCommitDetails(session.accessToken, owner, repo, sha);
     
-    // Analyze each file in the commit
-    const allFeedback: AnalysisFeedback[] = [];
+    // Extract patches from the commit files
+    const patches = commitDetails.files.map((file) => ({
+      filename: file.filename,
+      patch: file.patch || "",
+      status: file.status,
+    }));
     
-    for (const file of commitDetails.files) {
-      const fileFeedback = analyzeFilePatch(file);
-      allFeedback.push(...fileFeedback);
-    }
+    // Use AI to analyze the code
+    const analysisResult = await analyzeWithAI(patches, stressMetadata || null);
 
-    // Determine if the fix was "perfect" (no warnings or issues)
-    const hasWarnings = allFeedback.some((f) => f.type === "warning");
-    const hasHints = allFeedback.some((f) => f.type === "hint");
-    const isPerfect = !hasWarnings && !hasHints;
-
-    // Generate summary
-    let summary: string;
-    if (isPerfect && allFeedback.length === 0) {
-      summary = "Excellent work! Your fix looks clean and complete.";
-    } else if (isPerfect) {
-      summary = "Good job! Your fix is solid with just a few minor notes.";
-    } else if (hasWarnings) {
-      summary = "Your fix works, but there are some issues to consider.";
-    } else {
-      summary = "Your fix is complete with some suggestions for improvement.";
-    }
-
-    // Add a success message if perfect
-    if (isPerfect) {
-      allFeedback.unshift({
-        type: "success",
-        title: "Clean fix!",
-        message: "Your code changes look good. No unnecessary code or common issues detected.",
-      });
-    }
-
-    const response: AnalyzeResponse = {
-      feedback: allFeedback,
-      summary,
-      isPerfect,
-    };
-
-    return NextResponse.json(response);
+    return NextResponse.json(analysisResult);
   } catch (error) {
-    console.error("Error analyzing commit:", error);
+    console.error("[Analyze] Error:", error);
+    
+    // Return a user-friendly error
+    const errorMessage = error instanceof AIAnalysisError
+      ? error.message
+      : "Failed to analyze code. Please try again.";
+    
     return NextResponse.json(
-      { error: "Failed to analyze commit" },
+      { error: errorMessage },
       { status: 500 }
     );
   }
 }
-
