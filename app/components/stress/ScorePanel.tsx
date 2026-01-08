@@ -335,7 +335,8 @@ export function ScorePanel({
         </div>
       )}
 
-      {/* Timeline - Compact */}
+      {/* Timeline - Compact (only shown when no analysis) */}
+      {!analysisResult && (
       <div 
         className={`space-y-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         style={{ transitionDelay: "1000ms" }}
@@ -394,6 +395,7 @@ export function ScorePanel({
           </div>
         </div>
       </div>
+      )}
 
       {/* Footer */}
       <div 
