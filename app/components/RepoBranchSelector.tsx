@@ -24,6 +24,8 @@ import { LOADING_STEPS } from "@/app/components/stress/loading-steps";
 interface RepoBranchSelectorProps {
   repos: GitHubRepo[];
   accessToken: string;
+  userName?: string;
+  logoutForm?: React.ReactNode;
 }
 
 /**
@@ -33,7 +35,7 @@ interface RepoBranchSelectorProps {
  * @param repos - List of user's GitHub repositories
  * @param accessToken - GitHub OAuth access token for fetching data
  */
-export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBranchSelectorProps) {
+export function RepoBranchSelector({ repos: initialRepos, accessToken, userName, logoutForm }: RepoBranchSelectorProps) {
   const { addNote, addBranchChange } = useNotes();
   const { params: urlParams, isInitialized: urlInitialized, updateParams: updateUrlParams, clearParams: clearUrlParams } = useDashboardUrl();
 
@@ -755,6 +757,18 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken }: RepoBra
 
       {/* Right Panel - Commit Details & Files */}
       <div className="flex h-full w-[60%] flex-col overflow-hidden p-6">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-end">
+          {userName && (
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gh-text-muted">
+                <span className="font-semibold text-white">{userName}</span>
+              </span>
+              <div>{logoutForm}</div>
+            </div>
+          )}
+        </div>
+
         {/* Score Panel View */}
         {showScorePanel && startCommit && completeCommit ? (
           <ScorePanel startCommit={startCommit} completeCommit={completeCommit} branchName={selectedBranch || ""} onClose={() => setShowScorePanel(false)} stressMetadata={stressMetadata} />

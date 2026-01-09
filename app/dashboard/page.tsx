@@ -35,25 +35,24 @@ export default async function Dashboard() {
 
       {/* Main split layout */}
       <div className="relative flex w-full">
-        <RepoBranchSelector repos={repos} accessToken={accessToken} />
-      </div>
-
-      {/* Header with user info and logout */}
-      <div className="absolute right-6 top-6 z-20 flex items-center gap-4">
-        <span className="text-sm text-[#8b949e]">
-          <span className="font-semibold text-white">{session?.user?.name ?? "User"}</span>
-        </span>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-        >
-          <Button type="submit" variant="secondary" size="sm">
-            <LogoutIcon className="h-4 w-4" />
-            Log out
-          </Button>
-        </form>
+        <RepoBranchSelector
+          repos={repos}
+          accessToken={accessToken}
+          userName={session?.user?.name ?? "User"}
+          logoutForm={
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/" });
+              }}
+            >
+              <Button type="submit" variant="secondary" size="sm">
+                <LogoutIcon className="h-4 w-4" />
+                Log out
+              </Button>
+            </form>
+          }
+        />
       </div>
     </div>
   );
