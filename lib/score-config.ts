@@ -48,7 +48,7 @@ export const SCORE_RATINGS: Record<string, ScoreRating> = {
     emoji: "🌟",
     description: "Exceptional debugging skills!",
     gradient: "from-amber-400 to-yellow-500",
-    textColor: "text-amber-300",
+    textColor: "text-white",
   },
   B: {
     grade: "B",
