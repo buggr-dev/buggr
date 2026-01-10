@@ -1,17 +1,21 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
 
 /**
- * NextAuth.js configuration with GitHub OAuth provider.
+ * NextAuth.js configuration with GitHub OAuth provider and Prisma adapter.
  * 
  * Required environment variables:
  * - AUTH_GITHUB_ID: GitHub OAuth App Client ID
  * - AUTH_GITHUB_SECRET: GitHub OAuth App Client Secret
  * - AUTH_SECRET: Random secret for signing tokens (generate with `npx auth secret`)
+ * - DATABASE_URL: Neon PostgreSQL connection string
  * 
  * @see https://authjs.dev/getting-started/installation
  */
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(prisma),
   providers: [
     GitHub({
       authorization: {
@@ -39,5 +43,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.accessToken = token.accessToken as string;
       return session;
     },
+  },
+  // Use JWT strategy to keep access token available in callbacks
+  session: {
+    strategy: "jwt",
   },
 });
