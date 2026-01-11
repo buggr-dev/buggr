@@ -264,6 +264,7 @@ export function ScorePanel({
   const [analysisResult, setAnalysisResult] = useState<AnalyzeResponse | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [showAnalysisView, setShowAnalysisView] = useState(true);
+  const [analysisRevealed, setAnalysisRevealed] = useState(false);
   
   // Ref to track step progression intervals
   const stepIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -279,16 +280,31 @@ export function ScorePanel({
     enabled: !!stressMetadata?.buggerId,
   });
 
-  // If we found an existing result, populate the analysis state
+  // If we found an existing result, populate the analysis state with a reveal animation
   useEffect(() => {
-    if (existingData?.result && !analysisResult) {
-      setAnalysisResult({
-        summary: existingData.result.analysisSummary || "",
-        isPerfect: existingData.result.analysisIsPerfect,
-        feedback: existingData.result.analysisFeedback || [],
-      });
+    const result = existingData?.result;
+    if (result && !analysisResult) {
+      // Small delay to allow the loading state to fade out first
+      const timer = setTimeout(() => {
+        setAnalysisResult({
+          summary: result.analysisSummary || "",
+          isPerfect: result.analysisIsPerfect,
+          feedback: result.analysisFeedback || [],
+        });
+        // Trigger the reveal animation after content is set
+        setTimeout(() => setAnalysisRevealed(true), 50);
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [existingData, analysisResult]);
+
+  // Also trigger reveal when analysis completes from a fresh analyze action
+  useEffect(() => {
+    if (analysisResult && !analysisRevealed) {
+      const timer = setTimeout(() => setAnalysisRevealed(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [analysisResult, analysisRevealed]);
 
   // Trigger entrance animation on mount
   useEffect(() => {
@@ -528,12 +544,15 @@ export function ScorePanel({
       {/* Loading state while checking for existing result */}
       {isCheckingExisting && !analysisResult && (
         <div 
-          className={`transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          className={`transition-all duration-300 ease-out ${isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}
           style={{ transitionDelay: "900ms" }}
         >
-          <div className="flex items-center justify-center gap-2 rounded-lg border border-gh-border bg-gh-canvas-subtle p-4">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gh-accent border-t-transparent" />
-            <span className="text-sm text-gh-text-muted">Checking for previous results...</span>
+          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-6">
+            <div className="relative">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gh-accent/30 border-t-gh-accent" />
+              <SparklesIcon className="absolute inset-0 m-auto h-4 w-4 text-gh-accent animate-pulse" />
+            </div>
+            <span className="text-sm text-gh-text-muted">Loading previous analysis...</span>
           </div>
         </div>
       )}
@@ -557,13 +576,19 @@ export function ScorePanel({
 
       {/* Analysis Results - shown when analysis exists and analysis view is active */}
       {analysisResult && showAnalysisView && (
-        <div 
-          className={`space-y-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
-          <h3 className="text-xs font-semibold tracking-wide text-gh-text-muted uppercase">Analysis</h3>
+        <div className="space-y-3">
+          {/* Header */}
+          <h3 
+            className={`text-xs font-semibold tracking-wide text-gh-text-muted uppercase transition-all duration-500 ease-out ${analysisRevealed ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}
+          >
+            Analysis
+          </h3>
           
           {/* Summary */}
-          <div className={`rounded-lg border p-3 ${analysisResult.isPerfect ? "border-green-500/30 bg-green-500/10" : "border-gh-border bg-gh-canvas-subtle"}`}>
+          <div 
+            className={`rounded-lg border p-3 transition-all duration-500 ease-out ${analysisResult.isPerfect ? "border-green-500/30 bg-green-500/10" : "border-gh-border bg-gh-canvas-subtle"} ${analysisRevealed ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}
+            style={{ transitionDelay: "100ms" }}
+          >
             <p className={`text-sm font-medium ${analysisResult.isPerfect ? "text-green-400" : "text-white"}`}>
               {analysisResult.summary}
             </p>
@@ -575,7 +600,8 @@ export function ScorePanel({
               {analysisResult.feedback.map((item, index) => (
                 <div 
                   key={index}
-                  className={`rounded-lg border p-3 ${getFeedbackBgColor(item.type)}`}
+                  className={`rounded-lg border p-3 transition-all duration-500 ease-out ${getFeedbackBgColor(item.type)} ${analysisRevealed ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
+                  style={{ transitionDelay: `${200 + index * 100}ms` }}
                 >
                   <div className="flex items-start gap-2">
                     <div className="mt-0.5 shrink-0">
