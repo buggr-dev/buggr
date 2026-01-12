@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { fetchCommitDetails, StressMetadata } from "@/lib/github";
 import { generateText, LanguageModel } from "ai";
+import { prisma } from "@/lib/prisma";
+import { logTokenUsage } from "@/lib/token-usage";
 
 /**
  * Feedback item returned by the analysis.
@@ -184,14 +186,24 @@ function extractUserReasoning(patch: string): string | null {
  * @param patches - Array of file patches (diffs) from the commit
  * @param metadata - Optional buggr metadata describing what bugs were introduced
  * @param userReasoning - Optional user-provided reasoning from reasoning.txt
+ * @param userId - Optional user ID for token usage tracking
+ * @param buggerId - Optional bugger ID for correlating token usage
+ * @param repoOwner - Repository owner for token usage tracking
+ * @param repoName - Repository name for token usage tracking
  * @returns Analysis response with feedback, summary, and isPerfect flag
  */
 async function analyzeWithAI(
   patches: { filename: string; patch: string; status: string }[],
   metadata: StressMetadata | null,
-  userReasoning: string | null
+  userReasoning: string | null,
+  userId?: string,
+  buggerId?: string,
+  repoOwner?: string,
+  repoName?: string
 ): Promise<AnalyzeResponse> {
+  const aiProvider = resolveAIProvider();
   const model = await createLanguageModel();
+  const modelName = process.env.AI_MODEL || (aiProvider === "anthropic" ? "claude-sonnet-4-20250514" : "unknown");
   
   // Format the patches for the prompt (excluding reasoning.txt from code review)
   const codePatchesText = patches
@@ -303,13 +315,32 @@ IMPORTANT:
     console.log("[Analyze] Sending to AI for analysis...");
     const startTime = Date.now();
     
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model,
       prompt,
     });
     
     const duration = Date.now() - startTime;
     console.log(`[Analyze] AI response received in ${duration}ms`);
+    console.log(`[Analyze] Token usage:`, usage);
+
+    // Log token usage if userId provided (AI SDK v6 uses inputTokens/outputTokens)
+    if (userId && usage) {
+      await logTokenUsage({
+        userId,
+        provider: aiProvider,
+        model: modelName,
+        usage: {
+          inputTokens: usage.inputTokens || 0,
+          outputTokens: usage.outputTokens || 0,
+          totalTokens: usage.totalTokens || 0,
+        },
+        operation: "analyze",
+        buggerId,
+        repoOwner,
+        repoName,
+      });
+    }
     
     if (!text || text.trim().length < 20) {
       throw new AIAnalysisError("AI returned empty or insufficient response");
@@ -391,6 +422,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Look up user for token usage tracking
+    const user = session.user?.email
+      ? await prisma.user.findUnique({ where: { email: session.user.email } })
+      : null;
+
     // Fetch the commit details including the diff
     const commitDetails = await fetchCommitDetails(session.accessToken, owner, repo, sha);
     
@@ -413,7 +449,15 @@ export async function POST(request: NextRequest) {
     }
     
     // Use AI to analyze the code
-    const analysisResult = await analyzeWithAI(patches, stressMetadata || null, userReasoning);
+    const analysisResult = await analyzeWithAI(
+      patches, 
+      stressMetadata || null, 
+      userReasoning,
+      user?.id,
+      stressMetadata?.buggerId,
+      owner,
+      repo
+    );
 
     return NextResponse.json(analysisResult);
   } catch (error) {

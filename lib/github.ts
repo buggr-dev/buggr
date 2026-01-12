@@ -316,6 +316,8 @@ export interface GitHubFileContent {
  * Metadata stored in .buggr.json for tracking bug session performance.
  */
 export interface StressMetadata {
+  /** Database ID of the Bugger record (for linking Results) */
+  buggerId?: string;
   /** Bug level used: "low", "medium", or "high" */
   stressLevel: "low" | "medium" | "high";
   /** Number of bugs introduced */

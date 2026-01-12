@@ -1,0 +1,198 @@
+// Prisma schema for Buggr
+// Using Neon PostgreSQL as the database provider
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// NextAuth.js Models
+// These models are required for the Prisma adapter to work with NextAuth
+// Docs: https://authjs.dev/reference/adapter/prisma
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  // Git provider profile data
+  // These are populated from the OAuth provider on first sign-in
+  gitProvider   String?   // "github", "gitlab", "bitbucket", etc.
+  gitUsername   String?   // Username on the git provider
+  gitProfileUrl String?   // URL to their profile
+
+  // Relations
+  accounts    Account[]
+  sessions    Session[]
+  buggers     Bugger[]
+  tokenUsages TokenUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([gitUsername])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================================
+// Buggr Application Models
+// ============================================================================
+
+/// A "Bugger" - created when code is buggered up (stress test challenge)
+/// Contains the bug report, changes made, and metadata about the challenge
+model Bugger {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Repository info
+  owner       String   // GitHub owner/org
+  repo        String   // Repository name
+  branchName  String   // The stress test branch
+
+  // Challenge configuration
+  stressLevel String   // "low", "medium", "high"
+  bugCount    Int      // Number of bugs introduced
+
+  // Commit reference
+  originalCommitSha String  // The commit the branch was created from (before bugs)
+
+  // Bug Report - what the user sees as symptoms
+  symptoms    String[]
+
+  // Branch Changes - technical descriptions of bugs introduced
+  changes     String[]
+
+  // Files that were buggered
+  filesBuggered String[]
+
+  // Detailed file changes with per-file info (for notifications UI)
+  // Structure: [{ file: string, success: boolean, changes?: string[] }]
+  fileChanges Json?
+
+  // Notification read status
+  noteRead    Boolean  @default(false)   // Bug Report notification read
+  changesRead Boolean  @default(false)   // Branch Changes notification read
+
+  // Result (optional - null until user completes the challenge)
+  result      Result?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([owner, repo])
+  @@index([branchName])
+  @@index([createdAt])
+}
+
+/// A "Result" - created when user completes and analyzes their fix
+/// Contains the score, timing, and AI recommendations
+model Result {
+  id        String   @id @default(cuid())
+  
+  // Link to the Bugger challenge
+  buggerId  String   @unique
+  bugger    Bugger   @relation(fields: [buggerId], references: [id], onDelete: Cascade)
+
+  // Scoring
+  grade     String   // "A+", "A", "B", etc.
+  timeMs    Int      // Time to complete in milliseconds
+
+  // Commit references for the fix
+  startCommitSha    String  // The "buggr: start" commit
+  completeCommitSha String  // The "buggr: complete" commit
+
+  // AI Analysis / Recommendations
+  analysisSummary   String?   // One-line summary from AI
+  analysisIsPerfect Boolean   @default(false)
+  analysisFeedback  Json?     // Full feedback array from AI
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ============================================================================
+// Token Usage Tracking
+// ============================================================================
+
+/// Tracks AI token usage for cost analysis and billing purposes.
+/// Records each AI API call with provider, model, token counts, and estimated cost.
+model TokenUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // AI Provider info
+  provider  String   // "anthropic", "ollama", "openai-compatible"
+  model     String   // "claude-sonnet-4-20250514", "llama3", etc.
+
+  // Token counts from the AI response
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+
+  // Operation context
+  operation   String   // "stress", "analyze"
+  buggerId    String?  // Link to specific bugger for correlation
+  stressLevel String?  // "low", "medium", "high" - only for stress operations
+
+  // Repository context (for additional analytics)
+  repoOwner   String?  // GitHub owner/org
+  repoName    String?  // Repository name
+
+  // Cost tracking (in cents to avoid floating point issues)
+  // Calculated based on provider pricing at time of call
+  estimatedCostCents Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([operation])
+  @@index([buggerId])
+}
+

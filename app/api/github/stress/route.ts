@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { fetchFileContent, updateFile, createStressMetadata, StressMetadata } from "@/lib/github";
-import { introduceAIStress } from "@/lib/ai-stress";
+import { introduceAIStress, AIStressResult } from "@/lib/ai-stress";
+import { prisma } from "@/lib/prisma";
+import { logTokenUsage, TokenUsageData } from "@/lib/token-usage";
 
 // Maximum file size in lines to process (keeps token usage reasonable)
 const MAX_FILE_LINES_SINGLE = 5000; // If only 1 file, allow up to 5000 lines
@@ -40,6 +42,11 @@ export async function POST(request: NextRequest) {
 
     // Validate context length if provided
     const stressContext = typeof context === "string" ? context.slice(0, 200) : undefined;
+
+    // Look up user early for token usage tracking
+    const user = session.user?.email
+      ? await prisma.user.findUnique({ where: { email: session.user.email } })
+      : null;
     
     // Validate stress level
     const validLevels = ["low", "medium", "high", "custom"] as const;
@@ -78,6 +85,9 @@ export async function POST(request: NextRequest) {
 
     const results: { file: string; success: boolean; changes?: string[]; symptoms?: string[]; error?: string }[] = [];
     const allSymptoms: string[] = [];
+    
+    // Collect token usage from all AI calls for logging after Bugger is created
+    const allUsageData: { usage: TokenUsageData; provider: string; model: string }[] = [];
 
     // Supported file extensions for buggering
     const SUPPORTED_EXTENSIONS = [
@@ -194,13 +204,20 @@ export async function POST(request: NextRequest) {
         const { filePath, content: decodedContent, sha } = selectedFile;
         
         // Use AI to introduce subtle stress with bugs for this file
-        const { content: modifiedContent, changes, symptoms } = await introduceAIStress(
+        const stressResult: AIStressResult = await introduceAIStress(
           decodedContent, 
           filePath, 
           stressContext, 
           stressLevel === "custom" ? "high" : stressLevel, // Use high subtlety for custom mode
           bugsForThisFile
         );
+        
+        const { content: modifiedContent, changes, symptoms, usage, provider, model } = stressResult;
+        
+        // Collect usage data for later logging (after Bugger is created)
+        if (usage) {
+          allUsageData.push({ usage, provider, model });
+        }
 
         // Only update if changes were made
         if (changes.length > 0 && modifiedContent !== decodedContent) {
@@ -253,17 +270,72 @@ export async function POST(request: NextRequest) {
     // Deduplicate symptoms
     const uniqueSymptoms = [...new Set(allSymptoms)];
 
-    // Create metadata file for performance tracking (only if stress was successful)
+    // Create database record and metadata file (only if stress was successful)
+    let buggerId: string | null = null;
+    
     if (successCount > 0) {
       const successfulResults = results.filter((r) => r.success);
       const allChanges = successfulResults.flatMap((r) => r.changes || []);
+      const filesBuggered = successfulResults.map((r) => r.file);
+      const effectiveStressLevel = stressLevel === "custom" ? "high" : stressLevel;
+
+      // Save Bugger to database first (so we have the ID for metadata)
+      try {
+        if (user) {
+          // Format file changes for the UI (includes per-file change details)
+          const fileChanges = successfulResults.map((r) => ({
+            file: r.file,
+            success: true,
+            changes: r.changes || [],
+          }));
+
+          const bugger = await prisma.bugger.create({
+            data: {
+              userId: user.id,
+              owner,
+              repo,
+              branchName: branch,
+              stressLevel: effectiveStressLevel,
+              bugCount: totalBugCount,
+              originalCommitSha: originalCommitSha || "",
+              symptoms: uniqueSymptoms,
+              changes: allChanges,
+              filesBuggered,
+              fileChanges, // Detailed per-file changes for notifications UI
+              noteRead: false,
+              changesRead: false,
+            },
+          });
+          buggerId = bugger.id;
+          
+          // Now log token usage with buggerId and full context
+          for (const { usage, provider, model } of allUsageData) {
+            await logTokenUsage({
+              userId: user.id,
+              provider,
+              model,
+              usage,
+              operation: "stress",
+              buggerId: bugger.id,
+              stressLevel: effectiveStressLevel,
+              repoOwner: owner,
+              repoName: repo,
+            });
+          }
+        }
+      } catch (dbError) {
+        // Log but don't fail the request if database save fails
+        console.error("Failed to save bugger to database:", dbError);
+      }
       
+      // Create metadata with buggerId included
       const metadata: StressMetadata = {
-        stressLevel: stressLevel === "custom" ? "high" : stressLevel, // Store as high for custom
+        buggerId: buggerId || undefined,
+        stressLevel: effectiveStressLevel,
         bugCount: totalBugCount,
         createdAt: new Date().toISOString(),
         symptoms: uniqueSymptoms,
-        filesBuggered: successfulResults.map((r) => r.file),
+        filesBuggered,
         changes: allChanges,
         originalCommitSha: originalCommitSha || "",
         owner,
@@ -271,6 +343,7 @@ export async function POST(request: NextRequest) {
         branch,
       };
 
+      // Save metadata to .buggr.json file in the branch
       try {
         await createStressMetadata(session.accessToken, metadata);
       } catch (metadataError) {
@@ -283,6 +356,7 @@ export async function POST(request: NextRequest) {
       message: `${successCount} of ${files.length} files have been buggered up`,
       results,
       symptoms: uniqueSymptoms,
+      buggerId, // Return the buggerId so the client can use it later
     });
   } catch (error) {
     console.error("Error buggering up code:", error);

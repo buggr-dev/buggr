@@ -1,5 +1,6 @@
 import { generateText, LanguageModel } from "ai";
 import { BugType, BUG_TYPES } from "./bug-types";
+import { TokenUsageData } from "./token-usage";
 
 /** Stress level configuration */
 type StressLevel = "low" | "medium" | "high";
@@ -401,6 +402,21 @@ export class AIStressError extends Error {
 }
 
 /**
+ * Result from AI stress generation including token usage for cost tracking.
+ */
+export interface AIStressResult {
+  content: string;
+  changes: string[];
+  symptoms: string[];
+  /** Token usage data for cost tracking (null if not available) */
+  usage: TokenUsageData | null;
+  /** AI provider used */
+  provider: string;
+  /** AI model used */
+  model: string;
+}
+
+/**
  * Uses AI to bugger up code with subtle but nasty breaking changes.
  * The changes should be realistic bugs that require debugging skills to find and fix.
  * 
@@ -411,7 +427,7 @@ export class AIStressError extends Error {
  * @param context - Optional context about what specific areas to focus bugs on (max 200 chars)
  * @param stressLevel - Bug level: "low", "medium", or "high"
  * @param targetBugCount - Optional specific number of bugs to introduce (overrides bug level bug count)
- * @returns Modified content with AI-generated breaking changes, descriptions, and user-facing symptoms
+ * @returns Modified content with AI-generated breaking changes, descriptions, symptoms, and usage data
  * @throws AIStressError if AI is unavailable or fails to generate bugs
  */
 export async function introduceAIStress(
@@ -420,9 +436,11 @@ export async function introduceAIStress(
   context?: string,
   stressLevel: StressLevel = "medium",
   targetBugCount?: number
-): Promise<{ content: string; changes: string[]; symptoms: string[] }> {
+): Promise<AIStressResult> {
   // Create the language model based on configured provider
+  const aiProvider = resolveAIProvider();
   const model = await createLanguageModel();
+  const modelName = process.env.AI_MODEL || (aiProvider === "anthropic" ? "claude-sonnet-4-20250514" : "unknown");
 
   const config = STRESS_CONFIGS[stressLevel];
 
@@ -592,10 +610,20 @@ The modifiedCode must be the COMPLETE file content. Do not truncate or summarize
       console.warn("WARNING: AI returned 0 changes! No bugs were introduced.");
     }
 
+    // Prepare usage data for return (AI SDK v6 uses inputTokens/outputTokens)
+    const usageData: TokenUsageData | null = usage ? {
+      inputTokens: usage.inputTokens || 0,
+      outputTokens: usage.outputTokens || 0,
+      totalTokens: usage.totalTokens || 0,
+    } : null;
+
     return {
       content: parsed.modifiedCode,
       changes: parsed.changes,
       symptoms: parsed.symptoms || selectedBugs.map(b => b.sampleSymptom),
+      usage: usageData,
+      provider: aiProvider,
+      model: modelName,
     };
   } catch (error) {
     if (error instanceof AIStressError) {

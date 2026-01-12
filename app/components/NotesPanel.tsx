@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useNotes } from "@/app/context/NotesContext";
+import {
+  useNotifications,
+  useMarkNoteRead,
+  useMarkChangesRead,
+  useMarkAllRead,
+  type Note,
+  type BranchChange,
+} from "@/app/hooks";
 import { Button } from "@/app/components/inputs/Button";
 import { EmptyState, EmptyStateIcons } from "@/app/components/EmptyState";
 import {
@@ -29,13 +37,6 @@ interface TabButtonProps {
 
 /**
  * Tab button component for switching between notification types.
- * @param tab - The tab identifier this button represents
- * @param activeTab - The currently active tab
- * @param onClick - Click handler to switch tabs
- * @param icon - Icon element to display
- * @param label - Text label for the tab
- * @param unreadCount - Number of unread items to show in badge
- * @param badgeVariant - Color variant for the badge ("danger" or "accent")
  */
 function TabButton({
   tab,
@@ -75,41 +76,46 @@ function TabButton({
 
 interface ActionsBarProps {
   hasUnread: boolean;
+  showAll: boolean;
+  onToggleShowAll: () => void;
   onMarkAllRead: () => void;
-  onClearAll: () => void;
 }
 
 /**
- * Actions bar with "Mark all as read" and "Clear all" buttons.
- * @param hasUnread - Whether there are unread items to mark as read
- * @param onMarkAllRead - Handler for marking all items as read
- * @param onClearAll - Handler for clearing all notifications
+ * Actions bar with "Show All" toggle and "Discard All" button.
  */
-function ActionsBar({ hasUnread, onMarkAllRead, onClearAll }: ActionsBarProps) {
+function ActionsBar({ hasUnread, showAll, onToggleShowAll, onMarkAllRead }: ActionsBarProps) {
   return (
-    <div className="flex items-center justify-end gap-2 border-b border-gh-border px-4 py-2">
+    <div className="flex items-center justify-between gap-2 border-b border-gh-border px-4 py-2">
+      <button
+        onClick={onToggleShowAll}
+        className={`text-xs transition-colors ${
+          showAll ? "text-gh-accent" : "text-gh-text-muted hover:text-white"
+        }`}
+      >
+        {showAll ? "Show Unread Only" : "Show All"}
+      </button>
       {hasUnread && (
         <button
           onClick={onMarkAllRead}
-          className="text-xs text-gh-accent hover:underline"
+          className="flex items-center gap-1 text-xs text-gh-text-muted hover:text-white"
         >
-          Mark all as read
+          <CheckIcon className="h-3 w-3" />
+          Read All
         </button>
       )}
-      <Button variant="ghost" size="sm" onClick={onClearAll}>
-        Clear all
-      </Button>
     </div>
   );
 }
 
 /**
  * Notes toggle button component for use in headers/navbars.
- * Shows unread count badge when there are unread notes or branch changes.
+ * Shows unread count badge when there are unread notifications.
  */
 export function NotesButton({ onClick }: { onClick: () => void }) {
-  const { unreadCount, unreadBranchChangesCount } = useNotes();
-  const totalUnread = unreadCount + unreadBranchChangesCount;
+  const { data } = useNotifications();
+  
+  const totalUnread = (data?.unreadNotesCount || 0) + (data?.unreadChangesCount || 0);
 
   return (
     <button
@@ -132,46 +138,67 @@ export function NotesButton({ onClick }: { onClick: () => void }) {
  * Shows as a slide-out panel from the right side with tabs for Bug Reports and Branch Changes.
  */
 export function NotesPanel() {
-  const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<NotificationTab>("bug-reports");
+  const [showAllNotes, setShowAllNotes] = useState(false);
+  const [showAllChanges, setShowAllChanges] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const {
-    notes,
-    branchChanges,
-    unreadCount,
-    unreadBranchChangesCount,
-    markAsRead,
-    markBranchChangeAsRead,
-    markAllAsRead,
-    markAllBranchChangesAsRead,
-    clearNotes,
-    clearBranchChanges,
-  } = useNotes();
-  const prevNotesCountRef = useRef(notes.length);
-  const prevBranchChangesCountRef = useRef(branchChanges.length);
 
-  // Auto-open panel when a new note is added
-  useEffect(() => {
-    if (notes.length > prevNotesCountRef.current) {
-      setIsOpen(true);
-      setActiveTab("bug-reports");
-    }
-    prevNotesCountRef.current = notes.length;
-  }, [notes.length]);
+  const { isPanelOpen, openPanel, closePanel } = useNotes();
 
-  // Auto-open panel when a new branch change is added (stays on bug-reports tab to avoid spoilers)
-  useEffect(() => {
-    if (branchChanges.length > prevBranchChangesCountRef.current) {
-      setIsOpen(true);
-      // Don't switch to branch-changes tab - those are "spoilers" for the bug hunt
+  // Fetch notifications from database
+  const { data: notificationsData, isLoading } = useNotifications({
+    showAll: activeTab === "bug-reports" ? showAllNotes : showAllChanges,
+    type: activeTab === "bug-reports" ? "notes" : "changes",
+  });
+
+  // Mutations for marking as read
+  const markNoteRead = useMarkNoteRead();
+  const markChangesRead = useMarkChangesRead();
+  const markAllRead = useMarkAllRead();
+
+  const notes = notificationsData?.notes || [];
+  const branchChanges = notificationsData?.branchChanges || [];
+  const unreadNotesCount = notificationsData?.unreadNotesCount || 0;
+  const unreadChangesCount = notificationsData?.unreadChangesCount || 0;
+
+  /**
+   * Handles discarding (marking as read) a note.
+   */
+  function handleDiscardNote(id: string) {
+    markNoteRead.mutate(id);
+  }
+
+  /**
+   * Handles discarding (marking as read) a branch change.
+   */
+  function handleDiscardChange(id: string) {
+    markChangesRead.mutate(id);
+  }
+
+  /**
+   * Handles marking all notes as read.
+   */
+  function handleMarkAllNotesRead() {
+    const unreadIds = notes.filter((n) => !n.read).map((n) => n.id);
+    if (unreadIds.length > 0) {
+      markAllRead.mutate({ ids: unreadIds, type: "note" });
     }
-    prevBranchChangesCountRef.current = branchChanges.length;
-  }, [branchChanges.length]);
+  }
+
+  /**
+   * Handles marking all branch changes as read.
+   */
+  function handleMarkAllChangesRead() {
+    const unreadIds = branchChanges.filter((c) => !c.read).map((c) => c.id);
+    if (unreadIds.length > 0) {
+      markAllRead.mutate({ ids: unreadIds, type: "changes" });
+    }
+  }
 
   /**
    * Generates a shareable message from a note.
    */
-  function generateShareMessage(note: typeof notes[0]): string {
+  function generateShareMessage(note: Note): string {
     const branchUrl = getBranchUrl(note.repoName, note.branchName, note.repoOwner);
     let message = `🐛 Bug Report\n\n`;
     
@@ -208,7 +235,8 @@ export function NotesPanel() {
   /**
    * Formats a date to a relative time string.
    */
-  function formatRelativeTime(date: Date): string {
+  function formatRelativeTime(dateInput: Date | string): string {
+    const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
@@ -226,23 +254,27 @@ export function NotesPanel() {
     return `https://github.com/${repoOwner}/${repoName}/tree/${encodeURIComponent(branchName)}`;
   }
 
+  // Filter notes based on showAll toggle
+  const displayedNotes = showAllNotes ? notes : notes.filter((n) => !n.read);
+  const displayedChanges = showAllChanges ? branchChanges : branchChanges.filter((c) => !c.read);
+
   return (
     <>
       {/* Header Button */}
-      <NotesButton onClick={() => setIsOpen(true)} />
+      <NotesButton onClick={openPanel} />
 
       {/* Backdrop */}
-      {isOpen && (
+      {isPanelOpen && (
         <div
           className="fixed inset-0 z-[9998] bg-black/50 transition-opacity"
-          onClick={() => setIsOpen(false)}
+          onClick={closePanel}
         />
       )}
 
       {/* Notes Panel */}
       <div
         className={`fixed right-0 top-0 z-[9999] h-full w-96 transform border-l border-gh-border bg-gh-canvas shadow-2xl transition-transform duration-300 ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+          isPanelOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header */}
@@ -254,7 +286,7 @@ export function NotesPanel() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsOpen(false)}
+            onClick={closePanel}
           >
             <CloseIcon className="h-5 w-5" />
           </Button>
@@ -268,7 +300,7 @@ export function NotesPanel() {
             onClick={() => setActiveTab("bug-reports")}
             icon={<LightningIcon className="h-4 w-4" />}
             label="Bug Reports"
-            unreadCount={unreadCount}
+            unreadCount={unreadNotesCount}
             badgeVariant="danger"
           />
           <TabButton
@@ -277,54 +309,56 @@ export function NotesPanel() {
             onClick={() => setActiveTab("branch-changes")}
             icon={<DocumentIcon className="h-4 w-4" />}
             label="Branch Changes"
-            unreadCount={unreadBranchChangesCount}
+            unreadCount={unreadChangesCount}
             badgeVariant="accent"
           />
         </div>
 
         {/* Actions */}
-        {activeTab === "bug-reports" && notes.length > 0 && (
+        {activeTab === "bug-reports" && (
           <ActionsBar
-            hasUnread={unreadCount > 0}
-            onMarkAllRead={markAllAsRead}
-            onClearAll={() => {
-              clearNotes();
-              clearBranchChanges();
-            }}
+            hasUnread={unreadNotesCount > 0}
+            showAll={showAllNotes}
+            onToggleShowAll={() => setShowAllNotes(!showAllNotes)}
+            onMarkAllRead={handleMarkAllNotesRead}
           />
         )}
-        {activeTab === "branch-changes" && branchChanges.length > 0 && (
+        {activeTab === "branch-changes" && (
           <ActionsBar
-            hasUnread={unreadBranchChangesCount > 0}
-            onMarkAllRead={markAllBranchChangesAsRead}
-            onClearAll={() => {
-              clearNotes();
-              clearBranchChanges();
-            }}
+            hasUnread={unreadChangesCount > 0}
+            showAll={showAllChanges}
+            onToggleShowAll={() => setShowAllChanges(!showAllChanges)}
+            onMarkAllRead={handleMarkAllChangesRead}
           />
         )}
 
         {/* Content */}
         <div className="h-[calc(100%-10rem)] overflow-y-auto">
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-gh-accent/30 border-t-gh-accent" />
+            </div>
+          )}
+
           {/* Bug Reports Tab */}
-          {activeTab === "bug-reports" && (
+          {!isLoading && activeTab === "bug-reports" && (
             <>
-              {notes.length === 0 ? (
+              {displayedNotes.length === 0 ? (
                 <EmptyState
                   icon={EmptyStateIcons.bugReports}
-                  title="No bug reports yet"
-                  description="Bugger a branch to see reports here"
+                  title={showAllNotes ? "No bug reports yet" : "No unread bug reports"}
+                  description={showAllNotes ? "Bugger a branch to see reports here" : "All caught up! Click 'Show All' to see history"}
                 />
               ) : (
                 <div className="flex flex-col">
-                  {notes.map((note) => {
+                  {displayedNotes.map((note) => {
                     const branchUrl = getBranchUrl(note.repoName, note.branchName, note.repoOwner);
                     
                     return (
                       <div
                         key={note.id}
-                        onClick={() => markAsRead(note.id)}
-                        className={`cursor-pointer border-b border-gh-border p-4 transition-colors hover:bg-gh-canvas-subtle ${
+                        className={`border-b border-gh-border p-4 transition-colors ${
                           !note.read ? "bg-gh-danger/5" : ""
                         }`}
                       >
@@ -336,9 +370,20 @@ export function NotesPanel() {
                             )}
                             <h3 className="text-sm font-medium text-white">{note.title}</h3>
                           </div>
-                          <span className="flex-shrink-0 text-xs text-gh-text-muted">
-                            {formatRelativeTime(note.timestamp)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="flex-shrink-0 text-xs text-gh-text-muted">
+                              {formatRelativeTime(note.timestamp)}
+                            </span>
+                            {!note.read && (
+                              <button
+                                onClick={() => handleDiscardNote(note.id)}
+                                className="rounded p-1 text-gh-text-muted transition-colors hover:bg-gh-border hover:text-white"
+                                title="Mark as read"
+                              >
+                                <CheckIcon className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Branch/Repo Info with Link */}
@@ -349,7 +394,6 @@ export function NotesPanel() {
                                 href={branchUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
                                 className="inline-flex items-center gap-1.5 rounded-md border border-gh-border bg-gh-canvas-subtle px-2 py-1 text-xs text-gh-accent transition-colors hover:border-gh-accent hover:bg-gh-accent/10"
                               >
                                 <GitHubIcon className="h-3 w-3" />
@@ -381,10 +425,7 @@ export function NotesPanel() {
                         {/* Copy to Clipboard Button */}
                         <div className="mt-3 flex justify-end">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyToClipboard(note.id, generateShareMessage(note));
-                            }}
+                            onClick={() => copyToClipboard(note.id, generateShareMessage(note))}
                             className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
                               copiedId === note.id
                                 ? "bg-gh-success/20 text-gh-success-fg"
@@ -413,24 +454,23 @@ export function NotesPanel() {
           )}
 
           {/* Branch Changes Tab */}
-          {activeTab === "branch-changes" && (
+          {!isLoading && activeTab === "branch-changes" && (
             <>
-              {branchChanges.length === 0 ? (
+              {displayedChanges.length === 0 ? (
                 <EmptyState
                   icon={EmptyStateIcons.commits}
-                  title="No branch changes yet"
-                  description="File changes from buggered branches will appear here"
+                  title={showAllChanges ? "No branch changes yet" : "No unread branch changes"}
+                  description={showAllChanges ? "File changes from buggered branches will appear here" : "All caught up! Click 'Show All' to see history"}
                 />
               ) : (
                 <div className="flex flex-col">
-                  {branchChanges.map((change) => {
+                  {displayedChanges.map((change) => {
                     const branchUrl = getBranchUrl(change.repoName, change.branchName, change.repoOwner);
                     
                     return (
                       <div
                         key={change.id}
-                        onClick={() => markBranchChangeAsRead(change.id)}
-                        className={`cursor-pointer border-b border-gh-border p-4 transition-colors hover:bg-gh-canvas-subtle ${
+                        className={`border-b border-gh-border p-4 transition-colors ${
                           !change.read ? "bg-gh-accent/5" : ""
                         }`}
                       >
@@ -442,9 +482,20 @@ export function NotesPanel() {
                             )}
                             <h3 className="text-sm font-medium text-white">Branch Buggered</h3>
                           </div>
-                          <span className="flex-shrink-0 text-xs text-gh-text-muted">
-                            {formatRelativeTime(change.timestamp)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="flex-shrink-0 text-xs text-gh-text-muted">
+                              {formatRelativeTime(change.timestamp)}
+                            </span>
+                            {!change.read && (
+                              <button
+                                onClick={() => handleDiscardChange(change.id)}
+                                className="rounded p-1 text-gh-text-muted transition-colors hover:bg-gh-border hover:text-white"
+                                title="Mark as read"
+                              >
+                                <CheckIcon className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Branch Link */}
@@ -454,7 +505,6 @@ export function NotesPanel() {
                               href={branchUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
                               className="inline-flex items-center gap-1.5 rounded-md border border-gh-border bg-gh-canvas-subtle px-2 py-1 text-xs text-gh-accent transition-colors hover:border-gh-accent hover:bg-gh-accent/10"
                             >
                               <GitHubIcon className="h-3 w-3" />
@@ -473,7 +523,7 @@ export function NotesPanel() {
 
                         {/* Files Changed */}
                         <div className="space-y-2">
-                          {change.files
+                          {(change.files as { file: string; success: boolean; changes?: string[] }[])
                             .filter((f) => f.success)
                             .map((fileResult) => (
                               <div

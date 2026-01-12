@@ -12,14 +12,15 @@ import {
   calculateScoreRating,
   DIFFICULTY_CONFIG,
 } from "@/lib/score-config";
+import { useResultByBugger, useSaveResult } from "@/app/hooks/useBuggers";
 
 /** Steps shown during code analysis */
 const ANALYSIS_STEPS: LoadingStep[] = [
-  { label: "Fetching commit changes", timeEstimate: "~2s" },
-  { label: "Reading your code diff", timeEstimate: "~1s" },
-  { label: "Checking for reasoning.txt", timeEstimate: "~1s" },
-  { label: "AI analyzing your fix", timeEstimate: "~5s" },
-  { label: "Generating feedback", timeEstimate: "~1m" },
+  { label: "Fetching commit changes", timeEstimate: "5-30s" },
+  { label: "Reading your code diff", timeEstimate: "5-30s" },
+  { label: "Checking for reasoning.txt", timeEstimate: "5-30s" },
+  { label: "AI analyzing your fix", timeEstimate: "5-30s" },
+  { label: "Generating feedback", timeEstimate: "1-2 min" },
 ];
 
 interface ScorePanelProps {
@@ -241,9 +242,43 @@ export function ScorePanel({
   const [analysisResult, setAnalysisResult] = useState<AnalyzeResponse | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [showAnalysisView, setShowAnalysisView] = useState(true);
+  const [analysisRevealed, setAnalysisRevealed] = useState(false);
   
   // Ref to track step progression intervals
   const stepIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check for existing result in the database
+  const { result: existingResult, isLoading: isCheckingExisting } = useResultByBugger(
+    stressMetadata?.buggerId
+  );
+
+  // Mutation hook for saving results
+  const { saveResult, isSaving } = useSaveResult();
+
+  // If we found an existing result, populate the analysis state with a reveal animation
+  useEffect(() => {
+    if (existingResult && !analysisResult) {
+      // Small delay to allow the loading state to fade out first
+      const timer = setTimeout(() => {
+        setAnalysisResult({
+          summary: existingResult.analysisSummary || "",
+          isPerfect: existingResult.analysisIsPerfect,
+          feedback: existingResult.analysisFeedback || [],
+        });
+        // Trigger the reveal animation after content is set
+        setTimeout(() => setAnalysisRevealed(true), 50);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [existingResult, analysisResult]);
+
+  // Also trigger reveal when analysis completes from a fresh analyze action
+  useEffect(() => {
+    if (analysisResult && !analysisRevealed) {
+      const timer = setTimeout(() => setAnalysisRevealed(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [analysisResult, analysisRevealed]);
 
   // Trigger entrance animation on mount
   useEffect(() => {
@@ -277,6 +312,35 @@ export function ScorePanel({
   );
 
   const bugCount = stressMetadata?.bugCount || 1;
+
+  /**
+   * Saves the stress test result to the database using the mutation hook.
+   * Called after analysis completes successfully.
+   * 
+   * @param analysis - The AI analysis result
+   */
+  const handleSaveResult = async (analysis: AnalyzeResponse) => {
+    if (!stressMetadata?.buggerId) {
+      console.warn("No buggerId found in stressMetadata, skipping result save");
+      return;
+    }
+
+    try {
+      await saveResult({
+        buggerId: stressMetadata.buggerId,
+        grade: scoreRating.grade,
+        timeMs,
+        startCommitSha: startCommit.sha,
+        completeCommitSha: completeCommit.sha,
+        analysisSummary: analysis.summary,
+        analysisIsPerfect: analysis.isPerfect,
+        analysisFeedback: analysis.feedback,
+      });
+    } catch (error) {
+      // Log but don't fail the UI if saving fails
+      console.error("Error saving result:", error);
+    }
+  };
 
   /**
    * Handles the analyze code action.
@@ -330,6 +394,9 @@ export function ScorePanel({
       await new Promise((resolve) => setTimeout(resolve, 500));
       
       setAnalysisResult(result);
+      
+      // Save the result to the database
+      await handleSaveResult(result);
     } catch (error) {
       console.error("Error analyzing code:", error);
       setAnalysisError("Failed to analyze code. Please try again.");
@@ -422,8 +489,8 @@ export function ScorePanel({
         <FullScoreCard {...scoreCardProps} />
       )}
 
-      {/* Analyze Button - only when not analyzing and no result yet */}
-      {!analyzing && !analysisResult && (
+      {/* Analyze Button - only when not analyzing, no result yet, and not checking for existing */}
+      {!analyzing && !analysisResult && !isCheckingExisting && (
         <div 
           className={`transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
           style={{ transitionDelay: "900ms" }}
@@ -437,6 +504,22 @@ export function ScorePanel({
             <SparklesIcon className="h-4 w-4" />
             Analyze Code
           </Button>
+        </div>
+      )}
+
+      {/* Loading state while checking for existing result */}
+      {isCheckingExisting && !analysisResult && (
+        <div 
+          className={`transition-all duration-300 ease-out ${isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}
+          style={{ transitionDelay: "900ms" }}
+        >
+          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-6">
+            <div className="relative">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gh-accent/30 border-t-gh-accent" />
+              <SparklesIcon className="absolute inset-0 m-auto h-4 w-4 text-gh-accent animate-pulse" />
+            </div>
+            <span className="text-sm text-gh-text-muted">Loading previous analysis...</span>
+          </div>
         </div>
       )}
 
@@ -459,13 +542,19 @@ export function ScorePanel({
 
       {/* Analysis Results - shown when analysis exists and analysis view is active */}
       {analysisResult && showAnalysisView && (
-        <div 
-          className={`space-y-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
-          <h3 className="text-xs font-semibold tracking-wide text-gh-text-muted uppercase">Analysis</h3>
+        <div className="space-y-3">
+          {/* Header */}
+          <h3 
+            className={`text-xs font-semibold tracking-wide text-gh-text-muted uppercase transition-all duration-500 ease-out ${analysisRevealed ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}
+          >
+            Analysis
+          </h3>
           
           {/* Summary */}
-          <div className={`rounded-lg border p-3 ${analysisResult.isPerfect ? "border-green-500/30 bg-green-500/10" : "border-gh-border bg-gh-canvas-subtle"}`}>
+          <div 
+            className={`rounded-lg border p-3 transition-all duration-500 ease-out ${analysisResult.isPerfect ? "border-green-500/30 bg-green-500/10" : "border-gh-border bg-gh-canvas-subtle"} ${analysisRevealed ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}
+            style={{ transitionDelay: "100ms" }}
+          >
             <p className={`text-sm font-medium ${analysisResult.isPerfect ? "text-green-400" : "text-white"}`}>
               {analysisResult.summary}
             </p>
@@ -477,7 +566,8 @@ export function ScorePanel({
               {analysisResult.feedback.map((item, index) => (
                 <div 
                   key={index}
-                  className={`rounded-lg border p-3 ${getFeedbackBgColor(item.type)}`}
+                  className={`rounded-lg border p-3 transition-all duration-500 ease-out ${getFeedbackBgColor(item.type)} ${analysisRevealed ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
+                  style={{ transitionDelay: `${200 + index * 100}ms` }}
                 >
                   <div className="flex items-start gap-2">
                     <div className="mt-0.5 shrink-0">
@@ -490,7 +580,7 @@ export function ScorePanel({
                       {item.improvement && (
                         <div className="mt-2 rounded-md bg-gh-canvas-default/50 p-2">
                           <p className="text-xs font-medium text-purple-300 mb-1">💡 Better approach:</p>
-                          <p className="text-xs text-gh-text-secondary">{item.improvement}</p>
+                          <p className="text-xs text-gh-text-muted">{item.improvement}</p>
                         </div>
                       )}
                       {item.file && (
