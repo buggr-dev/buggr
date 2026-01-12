@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-helpers";
 import type { AnalysisFeedback } from "@/app/api/github/analyze/route";
 
 /**
@@ -33,14 +33,8 @@ interface SaveResultRequest {
  * @returns The created Result record
  */
 export async function POST(request: NextRequest) {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const { user, error } = await requireAuth();
+  if (error) return error;
 
   try {
     const body: SaveResultRequest = await request.json();
@@ -57,18 +51,6 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-    }
-
-    // Find the user by email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
     }
 
     // Verify the Bugger exists and belongs to this user
@@ -136,31 +118,13 @@ export async function POST(request: NextRequest) {
  * @returns Array of Result records with their associated Bugger data
  */
 export async function GET(request: NextRequest) {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const { user, error } = await requireAuth();
+  if (error) return error;
 
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
-
-    // Find the user by email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
 
     // Fetch results for this user's buggers
     const results = await prisma.result.findMany({

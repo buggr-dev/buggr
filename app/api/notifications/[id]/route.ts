@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-helpers";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -15,20 +15,8 @@ interface RouteParams {
  *   - type: "note" | "changes" | "both"
  */
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const session = await auth();
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Find user by email to get the ID
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { id: true },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
+  const { user, error } = await requireAuth();
+  if (error) return error;
 
   const { id } = await params;
   const body = await request.json();

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-helpers";
 
 /**
  * User data returned from the API.
@@ -29,38 +29,15 @@ export interface UserResponse {
  * @returns The user's profile data with stats
  */
 export async function GET() {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const { user, error } = await requireAuth();
+  if (error) return error;
 
   try {
-    // Find the user with their buggers and results
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        buggers: {
-          include: {
-            result: true,
-          },
-        },
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    // Calculate stats
-    const totalBuggers = user.buggers.length;
-    const completedBuggers = user.buggers.filter(b => b.result !== null).length;
+    // Get stats using efficient count queries
+    const [totalBuggers, completedBuggers] = await Promise.all([
+      prisma.bugger.count({ where: { userId: user.id } }),
+      prisma.bugger.count({ where: { userId: user.id, result: { isNot: null } } }),
+    ]);
 
     const response: UserResponse = {
       id: user.id,

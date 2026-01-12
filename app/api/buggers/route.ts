@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-helpers";
 
 /**
  * Request body for creating a Bugger (when code is buggered up).
@@ -37,14 +37,8 @@ interface CreateBuggerRequest {
  * @returns The created Bugger record with its ID
  */
 export async function POST(request: NextRequest) {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const { user, error } = await requireAuth();
+  if (error) return error;
 
   try {
     const body: CreateBuggerRequest = await request.json();
@@ -62,18 +56,6 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-    }
-
-    // Find the user by email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
     }
 
     // Create the Bugger record
@@ -116,32 +98,14 @@ export async function POST(request: NextRequest) {
  * @returns Array of Bugger records with their Results (if completed)
  */
 export async function GET(request: NextRequest) {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const { user, error } = await requireAuth();
+  if (error) return error;
 
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
     const completed = searchParams.get("completed"); // "true", "false", or null (all)
-
-    // Find the user by email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
 
     // Build where clause
     const where: { userId: string; result?: { isNot: null } | null } = { 

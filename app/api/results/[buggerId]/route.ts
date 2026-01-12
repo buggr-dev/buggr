@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-helpers";
 
 /**
  * GET /api/results/[buggerId]
@@ -15,14 +15,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ buggerId: string }> }
 ) {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const { user, error } = await requireAuth();
+  if (error) return error;
 
   try {
     const { buggerId } = await params;
@@ -31,18 +25,6 @@ export async function GET(
       return NextResponse.json(
         { error: "Missing buggerId parameter" },
         { status: 400 }
-      );
-    }
-
-    // Find the user by email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
       );
     }
 
