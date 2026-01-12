@@ -33,16 +33,22 @@ model User {
   // Coin system for usage limiting
   coins         Int       @default(10)  // Users start with 10 coins
 
+  // Invitation system
+  hasUsedInviteBonus Boolean @default(false)  // True after user sends invites (gets 30 coins once)
+  invitedByCode      String?                  // The invitation code used to sign up (if any)
+
   // Relations
-  accounts    Account[]
-  sessions    Session[]
-  buggers     Bugger[]
-  tokenUsages TokenUsage[]
+  accounts       Account[]
+  sessions       Session[]
+  buggers        Bugger[]
+  tokenUsages    TokenUsage[]
+  invitationsSent Invitation[]  // Invitations this user has sent
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([gitUsername])
+  @@index([invitedByCode])
 }
 
 model Account {
@@ -197,5 +203,39 @@ model TokenUsage {
   @@index([createdAt])
   @@index([operation])
   @@index([buggerId])
+}
+
+// ============================================================================
+// Invitation System
+// ============================================================================
+
+/// Tracks invitations sent by users for the referral bonus system.
+/// Users can invite up to 5 people once and get 30 coins.
+/// When an invited user signs up, the inviter gets an additional 30 coins.
+model Invitation {
+  id        String   @id @default(cuid())
+  
+  // Who sent the invitation
+  inviterId String
+  inviter   User     @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  
+  // Invitation details
+  email     String   // Email address of invited person
+  code      String   @unique  // Unique invitation code
+  
+  // Status tracking
+  status    String   @default("pending")  // "pending", "accepted"
+  acceptedAt DateTime?  // When the invited user signed up
+  acceptedByUserId String?  // ID of the user who accepted (after signup)
+  
+  // Bonus tracking
+  signupBonusAwarded Boolean @default(false)  // True if inviter got 30 coins for this signup
+  
+  createdAt DateTime @default(now())
+
+  @@index([inviterId])
+  @@index([email])
+  @@index([code])
+  @@index([status])
 }
 

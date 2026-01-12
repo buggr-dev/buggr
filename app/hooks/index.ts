@@ -30,6 +30,12 @@ export {
   type BranchChange,
 } from "./useNotifications";
 
+// Invitation hooks
+export {
+  useInvitations,
+  invitationsQueryKey,
+} from "./useInvitations";
+
 // Dashboard URL state (using nuqs)
 export { useDashboardState } from "./useDashboardState";
 
