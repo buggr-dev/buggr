@@ -29,6 +29,7 @@ export * from "./ChevronDownIcon";
 export * from "./ArrowRightIcon";
 export * from "./TrophyIcon";
 export * from "./BuggrIcon";
+export * from "./CoinIcon";
 
 // Re-export the shared types
 export type { IconProps } from "./types";

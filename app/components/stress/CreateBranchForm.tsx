@@ -63,6 +63,10 @@ interface CreateBranchFormProps {
    */
   maxFilesAvailable?: number;
   /**
+   * User's current coin balance.
+   */
+  userCoins?: number;
+  /**
    * Whether the form is currently submitting.
    */
   isLoading: boolean;
@@ -111,6 +115,7 @@ export function CreateBranchForm({
   customBugCount = 1,
   onCustomBugCountChange,
   maxFilesAvailable = 1,
+  userCoins,
   isLoading,
   loadingStep,
   loadingSteps,
@@ -154,6 +159,7 @@ export function CreateBranchForm({
         value={stressLevel}
         onChange={onStressLevelChange}
         disabled={isLoading}
+        userCoins={userCoins}
       />
 
       {/* Custom stress settings */}

@@ -30,6 +30,9 @@ model User {
   gitUsername   String?   // Username on the git provider
   gitProfileUrl String?   // URL to their profile
 
+  // Coin system for usage limiting
+  coins         Int       @default(10)  // Users start with 10 coins
+
   // Relations
   accounts    Account[]
   sessions    Session[]

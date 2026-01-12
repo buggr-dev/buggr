@@ -7,7 +7,7 @@ import type { GitHubRepo, GitHubBranch, GitHubCommit, GitHubCommitDetails, Stres
 import { fetchStressMetadata } from "@/lib/github";
 import { formatFullDate, generateTimestamp } from "@/lib/date";
 import { useDashboardState } from "@/app/hooks/useDashboardState";
-import { notificationsQueryKey } from "@/app/hooks";
+import { notificationsQueryKey, useUser, userQueryKey } from "@/app/hooks";
 import { useNotes } from "@/app/context/NotesContext";
 import { NotesPanel } from "@/app/components/NotesPanel";
 import { Select } from "@/app/components/inputs/Select";
@@ -21,8 +21,9 @@ import { CreateBranchForm } from "@/app/components/stress/CreateBranchForm";
 import { BranchSuccessCard } from "@/app/components/stress/BranchSuccessCard";
 import { ScorePanel } from "@/app/components/stress/ScorePanel";
 import { PublicReposList } from "@/app/components/PublicReposList";
-import { GitHubIcon, CloseIcon, TrashIcon, DocumentIcon, CheckIcon, CopyIcon, ExternalLinkIcon, TrophyIcon, BuggrIcon, ChevronDownIcon } from "@/app/components/icons";
+import { GitHubIcon, CloseIcon, TrashIcon, DocumentIcon, CheckIcon, CopyIcon, ExternalLinkIcon, TrophyIcon, BuggrIcon, ChevronDownIcon, CoinIcon } from "@/app/components/icons";
 import { LOADING_STEPS } from "@/app/components/stress/loading-steps";
+import { STRESS_LEVEL_COSTS } from "@/lib/stress-costs";
 
 interface RepoBranchSelectorProps {
   repos: GitHubRepo[];
@@ -41,6 +42,7 @@ interface RepoBranchSelectorProps {
 export function RepoBranchSelector({ repos: initialRepos, accessToken, userName, logoutForm }: RepoBranchSelectorProps) {
   const { openPanel } = useNotes();
   const queryClient = useQueryClient();
+  const { user } = useUser();
   
   // URL state via nuqs - automatically syncs with URL
   const { 
@@ -450,6 +452,8 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
 
         // Refresh notifications from database and open the panel
         queryClient.invalidateQueries({ queryKey: notificationsQueryKey() });
+        // Refresh user data to update coins
+        queryClient.invalidateQueries({ queryKey: userQueryKey });
         openPanel();
       }
 
@@ -789,6 +793,12 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
         <div className="mb-6 flex items-center justify-end">
           {userName && (
             <div className="flex items-center gap-4">
+              {user?.coins !== undefined && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-gh-border bg-gh-canvas-subtle px-3 py-1.5">
+                  <CoinIcon className="h-4 w-4 text-gh-accent" />
+                  <span className="text-sm font-semibold text-gh-accent">{user.coins}</span>
+                </div>
+              )}
               <Link 
                 href="/profile" 
                 className="group flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-gh-canvas-subtle"
@@ -908,6 +918,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
               {!showCreateBranch && (
                 <Button
                   variant="danger"
+                  disabled={user?.coins !== undefined && user.coins < STRESS_LEVEL_COSTS[stressLevel]}
                   onClick={() => {
                     setShowCreateBranch(true);
                     setTimestamp(generateTimestamp());
@@ -934,6 +945,7 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
                 customBugCount={customBugCount}
                 onCustomBugCountChange={setCustomBugCount}
                 maxFilesAvailable={commitDetails?.files?.filter((f) => f.status !== "removed").length || 0}
+                userCoins={user?.coins}
                 isLoading={creatingBranch}
                 loadingStep={loadingStep}
                 loadingSteps={LOADING_STEPS}

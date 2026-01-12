@@ -459,6 +459,20 @@ export async function introduceAIStress(
     ? `\n\nFRAMEWORK DETECTED: ${detectedFrameworks.join(", ").toUpperCase()}\nWhen introducing bugs, prioritize framework-specific issues like hooks, component lifecycle, prop drilling, JSX rendering, etc. Make sure framework-specific bugs are realistic and follow framework patterns.`
     : "";
   
+  // Detect HTML files and add specific instructions
+  const isHtmlFile = filename.toLowerCase().endsWith('.html') || filename.toLowerCase().endsWith('.htm');
+  const htmlInstruction = isHtmlFile
+    ? `\n\nHTML FILE DETECTED: This is an HTML file. Focus on bugs that affect the rendered output:
+- Change or remove class names (causing styling issues)
+- Modify id attributes (breaking JavaScript selectors)
+- Change data attributes or onclick handlers
+- Swap or duplicate elements
+- Modify text content to be incorrect
+- Remove or duplicate script/link tags
+- Change form input names or values
+DO NOT break the HTML structure itself (keep tags properly closed).`
+    : "";
+  
   // Build optional focus area instruction
   const focusInstruction = context 
     ? `\n\nFOCUS AREA: The user wants to specifically test: "${context}"\nTry to apply the bugs in areas related to this focus when possible.`
@@ -476,6 +490,8 @@ ${bugInstructions}
 ${focusInstruction}
 
 ${frameworkInstruction}
+
+${htmlInstruction}
 
 CRITICAL RULES:
 1. Introduce EXACTLY the bugs listed above - do not substitute or add different bugs
