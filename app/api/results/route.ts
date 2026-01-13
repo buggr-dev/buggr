@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-helpers";
 import type { AnalysisFeedback } from "@/app/api/github/analyze/route";
@@ -91,8 +92,10 @@ export async function POST(request: NextRequest) {
         completeCommitSha: body.completeCommitSha,
         analysisSummary: body.analysisSummary,
         analysisIsPerfect: body.analysisIsPerfect ?? false,
-        // Only include analysisFeedback if provided (Prisma JSON fields can't accept null directly)
-        ...(body.analysisFeedback && { analysisFeedback: body.analysisFeedback }),
+        // Cast to Prisma.InputJsonValue for JSON field compatibility
+        ...(body.analysisFeedback && { 
+          analysisFeedback: body.analysisFeedback as unknown as Prisma.InputJsonValue 
+        }),
       },
     });
 
