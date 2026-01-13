@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-helpers";
+import { sendInvitationEmail } from "@/lib/email";
 import crypto from "crypto";
 
 /** Coins awarded for sending first invitations (one-time bonus) */
@@ -180,6 +181,24 @@ export async function POST(request: NextRequest) {
       createdAt: inv.createdAt.toISOString(),
     }));
 
+    // Send invitation emails (don't block response on email delivery)
+    const inviterName = user.name || user.gitUsername || "Someone";
+    const emailResults = await Promise.allSettled(
+      result.invitations.map((inv) =>
+        sendInvitationEmail(inv.email, inviterName, inv.code)
+      )
+    );
+
+    // Count successful emails
+    const emailsSent = emailResults.filter(
+      (r) => r.status === "fulfilled" && r.value.success
+    ).length;
+    const emailsFailed = emailResults.length - emailsSent;
+
+    if (emailsFailed > 0) {
+      console.warn(`[Invitations] ${emailsFailed} of ${emailResults.length} invitation emails failed to send`);
+    }
+
     const message = result.bonusAwarded
       ? `Successfully invited ${emailsToInvite.length} user(s) and earned ${INVITE_BONUS_COINS} coins!`
       : `Successfully invited ${emailsToInvite.length} user(s)!`;
@@ -190,6 +209,8 @@ export async function POST(request: NextRequest) {
       coinsAwarded: result.bonusAwarded ? INVITE_BONUS_COINS : 0,
       newBalance: result.updatedUser.coins,
       bonusAwarded: result.bonusAwarded,
+      emailsSent,
+      emailsFailed,
       skipped: {
         alreadyInvited,
         existingUsers: existingUserEmails,
