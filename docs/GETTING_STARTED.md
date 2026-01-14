@@ -1,4 +1,4 @@
-# 🚀 Getting Started with Buggr
+# 🚀 Getting Started with Buggr 
 
 A step-by-step guide to buggering up your own repository.
 
