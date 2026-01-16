@@ -68,6 +68,7 @@ const levelConfig = {
  * @param userCoins - User's current coin balance (used to disable unaffordable options)
  */
 export function StressLevelSelector({ value, onChange, disabled, userCoins }: StressLevelSelectorProps) {
+  const isHardModeEnabled = process.env.NEXT_PUBLIC_IS_HARD_MODE_ENABLED === "true";
   // Remove 'custom' from displayed options but keep functionality
   const displayedLevels = ["low", "medium", "high"] as const;
   
@@ -87,7 +88,13 @@ export function StressLevelSelector({ value, onChange, disabled, userCoins }: St
           const config = levelConfig[level];
           const isActive = value === level;
           const canAfford = userCoins === undefined || userCoins >= config.cost;
-          const isDisabled = disabled || !canAfford;
+          const hardModeDisabled = !isHardModeEnabled && level === "high";
+          const isDisabled = disabled || !canAfford || hardModeDisabled;
+          const disabledMessage = !canAfford
+            ? `Need ${config.cost} coins`
+            : hardModeDisabled
+              ? "Available in local mode — coming soon in cloud"
+              : undefined;
 
           return (
             <button
@@ -98,7 +105,7 @@ export function StressLevelSelector({ value, onChange, disabled, userCoins }: St
               className={`flex flex-1 flex-col items-center rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 isActive ? config.activeClass : "text-gh-text-muted hover:text-white"
               }`}
-              title={!canAfford ? `Need ${config.cost} coins` : undefined}
+              title={disabledMessage}
             >
               <div>{config.emoji} {config.label}</div>
               <div className="mt-0.5 flex items-center gap-0.5 text-[10px] opacity-70">
@@ -109,6 +116,11 @@ export function StressLevelSelector({ value, onChange, disabled, userCoins }: St
           );
         })}
       </div>
+      {!isHardModeEnabled && (
+        <p className="text-[11px] text-gh-danger-fg text-right">
+          💀 Hard mode available in local mode — coming soon in cloud.
+        </p>
+      )}
       <p className="text-xs text-gh-text-subtle">{levelConfig[value].description}</p>
     </div>
   );
