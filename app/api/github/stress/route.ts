@@ -6,7 +6,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logTokenUsage, TokenUsageData } from "@/lib/token-usage";
 import { STRESS_LEVEL_COSTS } from "@/lib/stress-costs";
-import { sendBugReportEmail } from "@/lib/email";
+import { sendBugReportEmail, APP_URL } from "@/lib/email";
 
 // Maximum file size in lines to process (keeps token usage reasonable)
 const MAX_FILE_LINES_SINGLE = 5000; // If only 1 file, allow up to 5000 lines
@@ -405,9 +405,7 @@ export async function POST(request: NextRequest) {
 
       // Send bug report email to the user (don't block response)
       if (user.email && uniqueSymptoms.length > 0) {
-        const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL 
-          ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?repo=${owner}/${repo}&branch=${branch}`
-          : undefined;
+        const dashboardUrl = `${APP_URL}/dashboard?repo=${owner}/${repo}&branch=${branch}`;
 
         sendBugReportEmail({
           to: user.email,

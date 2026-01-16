@@ -8,7 +8,24 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.EMAIL_FROM || "Buggr <noreply@buggr.dev>";
 
 /** Base URL for the application */
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+export const APP_URL = resolveAppUrl();
+
+function resolveAppUrl(): string {
+  const envUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+    process.env.VERCEL_URL;
+
+  const fallback = "http://localhost:3000";
+  const rawUrl = envUrl || fallback;
+
+  const normalized = /^https?:\/\//i.test(rawUrl)
+    ? rawUrl
+    : `https://${rawUrl}`;
+
+  return normalized.replace(/\/$/, "");
+}
 
 /**
  * Sends an invitation email to the specified address.
