@@ -17,6 +17,7 @@ import { EmptyState, EmptyStateIcons } from "@/app/components/EmptyState";
 import { CommitCard } from "@/app/components/commits/CommitCard";
 import { FileChangeList } from "@/app/components/commits/FileChangeList";
 import { Container } from "@/app/components/Container";
+import { CoinsUpsell } from "@/app/components/CoinsUpsell";
 import { CreateBranchForm } from "@/app/components/stress/CreateBranchForm";
 import { BranchSuccessCard } from "@/app/components/stress/BranchSuccessCard";
 import { ScorePanel } from "@/app/components/stress/ScorePanel";
@@ -812,6 +813,9 @@ export function RepoBranchSelector({ repos: initialRepos, accessToken, userName,
             </div>
           )}
         </div>
+
+        {/* Coins CTA */}
+        <CoinsUpsell contactEmail={process.env.NEXT_PUBLIC_CONTACT_EMAIL} />
 
         {/* Score Panel View */}
         {showScorePanel && startCommit && completeCommit ? (

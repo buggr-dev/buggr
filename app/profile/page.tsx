@@ -18,6 +18,7 @@ import {
 import { STRESS_LEVEL_COSTS } from "@/lib/stress-costs";
 import { Button } from "@/app/components/inputs/Button";
 import { Container } from "@/app/components/Container";
+import { CoinsUpsell } from "../components/CoinsUpsell";
 
 /** Coins awarded for sending invitations */
 const INVITE_BONUS_COINS = 30;
@@ -210,7 +211,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Coins Section */}
-        <div className="mb-8 rounded-xl border border-gh-accent/30 bg-gradient-to-r from-gh-accent/10 to-gh-accent/5 p-6">
+        <div className="mb-4 rounded-xl border border-gh-accent/30 bg-gradient-to-r from-gh-accent/10 to-gh-accent/5 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gh-accent/20">
@@ -243,7 +244,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Invite Friends Section */}
-        <div className="mb-8 rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
+        <div className="mb-4 rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-white">Invite Friends</h2>
@@ -355,8 +356,10 @@ export default function ProfilePage() {
           )}
         </div>
 
+        <CoinsUpsell contactEmail="hello@buggr.dev" />
+
         {/* Stats Grid */}
-        <div className="mb-8 grid grid-cols-3 gap-4">
+        <div className="mt-20 mb-8 grid grid-cols-3 gap-4">
           <Container className="p-4 text-center">
             <p className="text-3xl font-bold text-white">{user.stats.totalBuggers}</p>
             <p className="mt-1 text-sm text-gh-text-muted">Challenges</p>
