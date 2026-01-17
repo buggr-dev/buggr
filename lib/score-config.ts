@@ -74,6 +74,14 @@ export const SCORE_RATINGS: Record<string, ScoreRating> = {
     gradient: "from-slate-400 to-slate-500",
     textColor: "text-slate-300",
   },
+  F: {
+    grade: "F",
+    label: "Try Again",
+    emoji: "📚",
+    description: "Bugs not resolved. Review and retry!",
+    gradient: "from-red-500 to-red-600",
+    textColor: "text-red-300",
+  },
 };
 
 /** Difficulty display configuration */

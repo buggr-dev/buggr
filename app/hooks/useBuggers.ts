@@ -19,6 +19,8 @@ export interface Bugger {
   changes: string[];
   filesBuggered: string[];
   createdAt: string;
+  /** AI-determined grade stored directly on bugger for easy access */
+  grade?: string | null;
   result?: Result | null;
 }
 
@@ -54,6 +56,7 @@ export interface ResultByBuggerResponse {
     branchName: string;
     stressLevel: string;
     bugCount: number;
+    grade: string | null;
     createdAt: string;
   };
 }

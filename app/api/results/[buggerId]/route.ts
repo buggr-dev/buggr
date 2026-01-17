@@ -59,6 +59,7 @@ export async function GET(
         branchName: bugger.branchName,
         stressLevel: bugger.stressLevel,
         bugCount: bugger.bugCount,
+        grade: bugger.grade,
         createdAt: bugger.createdAt,
       },
     });

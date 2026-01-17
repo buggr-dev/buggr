@@ -24,6 +24,9 @@ export interface AnalyzeResponse {
   feedback: AnalysisFeedback[];
   summary: string;
   isPerfect: boolean;
+
+  /** AI-determined grade based on time + code quality (A, B, C, D, F) */
+  grade: string;
 }
 
 /** Supported AI providers */
@@ -186,16 +189,18 @@ function extractUserReasoning(patch: string): string | null {
  * @param patches - Array of file patches (diffs) from the commit
  * @param metadata - Optional buggr metadata describing what bugs were introduced
  * @param userReasoning - Optional user-provided reasoning from reasoning.txt
+ * @param timeMs - Time taken to complete the challenge in milliseconds
  * @param userId - Optional user ID for token usage tracking
  * @param buggerId - Optional bugger ID for correlating token usage
  * @param repoOwner - Repository owner for token usage tracking
  * @param repoName - Repository name for token usage tracking
- * @returns Analysis response with feedback, summary, and isPerfect flag
+ * @returns Analysis response with feedback, summary, isPerfect flag, and grade
  */
 async function analyzeWithAI(
   patches: { filename: string; patch: string; status: string }[],
   metadata: StressMetadata | null,
   userReasoning: string | null,
+  timeMs: number,
   userId?: string,
   buggerId?: string,
   repoOwner?: string,
@@ -211,6 +216,21 @@ async function analyzeWithAI(
     .map((p) => `FILE: ${p.filename} (${p.status})\n\`\`\`diff\n${p.patch || "No changes"}\n\`\`\``)
     .join("\n\n");
   
+  // Calculate time in minutes for the prompt
+  const timeMinutes = Math.round(timeMs / (1000 * 60));
+  const timeFormatted = timeMinutes >= 60 
+    ? `${Math.floor(timeMinutes / 60)}h ${timeMinutes % 60}m` 
+    : `${timeMinutes}m`;
+
+  // Time thresholds for grading guidance
+  const timeThresholds = {
+    low: { maxA: 5, maxB: 10, maxC: 15 },
+    medium: { maxA: 7, maxB: 11, maxC: 15 },
+    high: { maxA: 10, maxB: 15, maxC: 20 },
+  };
+  const difficulty = (metadata?.stressLevel as "low" | "medium" | "high") || "medium";
+  const thresholds = timeThresholds[difficulty];
+
   // Build context about the bugs that were introduced
   let bugContext = "";
   if (metadata) {
@@ -218,6 +238,14 @@ async function analyzeWithAI(
 ## CONTEXT: What bugs were introduced
 
 The user was debugging a "${metadata.stressLevel}" difficulty challenge with ${metadata.bugCount} bug(s).
+**Time taken: ${timeFormatted} (${timeMinutes} minutes)**
+
+### Time Guidelines for ${difficulty} difficulty:
+- A grade: 0-${thresholds.maxA} minutes with excellent code
+- B grade: ${thresholds.maxA}-${thresholds.maxB} minutes with good code
+- C grade: ${thresholds.maxB}-${thresholds.maxC} minutes OR has issues
+- D grade: ${thresholds.maxC}+ minutes OR significant issues
+- F grade: Bugs not resolved or no explanation for why they couldn't be resolved
 
 ### Files that were bugged:
 ${metadata.filesBuggered.map((f) => `- ${f}`).join("\n")}
@@ -229,6 +257,14 @@ ${metadata.changes.map((c, i) => `${i + 1}. ${c}`).join("\n")}
 ${metadata.symptoms.map((s, i) => `${i + 1}. ${s}`).join("\n")}
 
 NOTE: Sometimes the AI-generated bugs don't actually cause the described symptoms, or the user found different issues. Consider the user's reasoning if provided.
+`;
+  } else {
+    bugContext = `
+## CONTEXT
+
+**Time taken: ${timeFormatted} (${timeMinutes} minutes)**
+
+No bug metadata available. Evaluate based on code quality and reasoning.
 `;
   }
 
@@ -258,6 +294,7 @@ IMPORTANT:
 2. Point out any issues with their fix (leftover code, incomplete fixes, etc.)
 3. Provide helpful tips on better approaches when applicable
 4. If the user provided reasoning, acknowledge and respond to their points directly
+5. **ASSIGN A GRADE (A, B, C, D, or F) based on time + code quality**
 
 ${bugContext}
 ${userReasoningContext}
@@ -280,6 +317,15 @@ IMPORTANT GUIDELINES:
 - If the user says the expected bugs weren't actually breaking, validate this and praise their investigative work.
 - Be conversational when responding to user notes - treat it like a code review dialogue.
 
+## GRADING CRITERIA (VERY IMPORTANT):
+- **A**: Fast time (within time guidelines) AND excellent code quality - all bugs fixed correctly with clean, proper solution
+- **B**: Good time AND good code quality - bugs fixed but minor issues or slightly over time with excellent code
+- **C**: Bugs mostly fixed but has room for improvement (warnings/hints) OR bugs not accurately identified in reasoning.txt
+- **D**: Over time with issues OR significant code problems
+- **F**: Bugs NOT resolved AND no explanation in reasoning.txt for why they couldn't be resolved. This is a failing grade.
+
+The grade is a COMBINATION of time and code accuracy. Even with fast time, if code has issues, it cannot be an A.
+
 Respond with ONLY a JSON object in this exact format (no markdown, no explanation):
 {
   "feedback": [
@@ -292,7 +338,8 @@ Respond with ONLY a JSON object in this exact format (no markdown, no explanatio
     }
   ],
   "summary": "One sentence overall assessment",
-  "isPerfect": true/false
+  "isPerfect": true/false,
+  "grade": "A|B|C|D|F"
 }
 
 FEEDBACK TYPES:
@@ -305,11 +352,12 @@ FEEDBACK TYPES:
 IMPORTANT:
 - Be concise but helpful
 - Provide 2-6 feedback items (don't overwhelm the user)
-- isPerfect should be true only if there are no warnings or hints
+- isPerfect should be true only if there are no warnings or hints AND grade is A
 - Always include at least one piece of feedback
 - For tips, the "message" should acknowledge what works, and "improvement" should explain the better approach
 - If user provided reasoning, include at least one feedback item that directly responds to what they wrote
-- If user notes that expected symptoms didn't occur, acknowledge this - AI bug generation isn't perfect!`;
+- If user notes that expected symptoms didn't occur, acknowledge this - AI bug generation isn't perfect!
+- **ALWAYS include a grade field with A, B, C, D, or F**`;
 
   try {
     console.log("[Analyze] Sending to AI for analysis...");
@@ -370,7 +418,25 @@ IMPORTANT:
       );
     }
     
-    console.log(`[Analyze] Parsed ${parsed.feedback.length} feedback items`);
+    // Validate grade - default to C if not provided or invalid
+    const validGrades = ["A", "B", "C", "D", "F"];
+    if (typeof parsed.grade !== "string" || !validGrades.includes(parsed.grade.toUpperCase())) {
+      // Fallback: determine grade based on isPerfect and warnings
+      const hasWarnings = parsed.feedback.some((f) => f.type === "warning");
+      const hasHints = parsed.feedback.some((f) => f.type === "hint");
+      
+      if (parsed.isPerfect && !hasWarnings && !hasHints) {
+        parsed.grade = "B"; // Default to B since we can't verify time without AI
+      } else if (hasWarnings) {
+        parsed.grade = "C";
+      } else {
+        parsed.grade = "C";
+      }
+    } else {
+      parsed.grade = parsed.grade.toUpperCase();
+    }
+    
+    console.log(`[Analyze] Parsed ${parsed.feedback.length} feedback items, grade: ${parsed.grade}`);
     return parsed;
     
   } catch (error) {
@@ -390,10 +456,12 @@ IMPORTANT:
  * 
  * Analyzes the code changes in a commit using AI and provides feedback.
  * Uses the buggr metadata to provide contextual feedback about the fix.
+ * The AI determines the grade based on time taken and code quality.
  * 
  * @param owner - Repository owner
  * @param repo - Repository name  
  * @param sha - Commit SHA to analyze
+ * @param timeMs - Time taken to complete the challenge in milliseconds
  * @param stressMetadata - Optional buggr metadata for contextual analysis
  */
 export async function POST(request: NextRequest) {
@@ -408,10 +476,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { owner, repo, sha, stressMetadata } = body as {
+    const { owner, repo, sha, timeMs, stressMetadata } = body as {
       owner: string;
       repo: string;
       sha: string;
+      timeMs: number;
       stressMetadata?: StressMetadata;
     };
 
@@ -421,6 +490,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate timeMs - default to 0 if not provided (AI will still evaluate code quality)
+    const validatedTimeMs = typeof timeMs === "number" && timeMs > 0 ? timeMs : 0;
 
     // Look up user for token usage tracking
     const user = session.user?.email
@@ -453,6 +525,7 @@ export async function POST(request: NextRequest) {
       patches, 
       stressMetadata || null, 
       userReasoning,
+      validatedTimeMs,
       user?.id,
       stressMetadata?.buggerId,
       owner,

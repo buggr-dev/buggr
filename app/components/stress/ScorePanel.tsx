@@ -9,8 +9,9 @@ import { ToggleGroup } from "@/app/components/inputs/ToggleGroup";
 import { LoadingProgress, LoadingStep } from "@/app/components/stress/LoadingProgress";
 import { CloseIcon, BuggrIcon, SparklesIcon, CheckIcon, InfoIcon, LightbulbIcon, TrophyIcon } from "@/app/components/icons";
 import {
-  calculateScoreRating,
+  SCORE_RATINGS,
   DIFFICULTY_CONFIG,
+  type ScoreRating,
 } from "@/lib/score-config";
 import { useResultByBugger, useSaveResult } from "@/app/hooks/useBuggers";
 
@@ -69,12 +70,109 @@ function calculateTimeDifference(
 
 /** Props for the score card helper components */
 interface ScoreCardProps {
-  scoreRating: ReturnType<typeof calculateScoreRating>;
+  scoreRating: ScoreRating;
   timeDifference: string;
   bugCount: number;
   difficulty: { label: string; color: string } | null;
   repoFullName: string | null;
   isVisible: boolean;
+}
+
+/** Props for time-only card shown before analysis */
+interface TimeOnlyCardProps {
+  timeDifference: string;
+  bugCount: number;
+  difficulty: { label: string; color: string } | null;
+  repoFullName: string | null;
+  isVisible: boolean;
+}
+
+/**
+ * Renders a card showing only time before AI analysis has occurred.
+ * No grade is displayed - the grade comes from AI analysis.
+ * 
+ * @param props - Time card display properties
+ * @returns JSX element for the time-only card
+ */
+function TimeOnlyCard({
+  timeDifference,
+  bugCount,
+  difficulty,
+  repoFullName,
+  isVisible,
+}: TimeOnlyCardProps) {
+  return (
+    <div 
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas-default border border-gh-border p-[2px] transition-all duration-700 ease-out ${isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"}`}
+      style={{ transitionDelay: "100ms" }}
+    >
+      <div className="rounded-[14px] bg-gh-canvas-default p-5">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <BuggrIcon className="h-4 w-4 text-gh-success" />
+            <span className="text-xs font-semibold tracking-wide text-white uppercase">Buggr</span>
+          </div>
+          {repoFullName && (
+            <code className="font-mono text-xs text-white">{repoFullName}</code>
+          )}
+        </div>
+
+        {/* Waiting for Analysis */}
+        <div 
+          className={`text-center mb-6 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          style={{ transitionDelay: "300ms" }}
+        >
+          <div className={`inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-gh-accent/30 to-purple-600/30 mb-3 transition-transform duration-700 ease-out ${isVisible ? "scale-100 rotate-0" : "scale-50 -rotate-12"}`}
+            style={{ transitionDelay: "400ms" }}
+          >
+            <span className="text-5xl">⏱️</span>
+          </div>
+          <div 
+            className={`flex items-center justify-center gap-2 mb-1 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+            style={{ transitionDelay: "500ms" }}
+          >
+            <h2 className="text-xl font-bold text-white">
+              Challenge Complete!
+            </h2>
+          </div>
+          <p 
+            className={`text-sm text-gh-text-muted transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}
+            style={{ transitionDelay: "600ms" }}
+          >
+            Analyze your code to get your grade
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-3">
+          <div 
+            className={`rounded-lg bg-gh-canvas-subtle p-3 text-center transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            style={{ transitionDelay: "650ms" }}
+          >
+            <p className="text-2xl font-bold text-white">{timeDifference}</p>
+            <p className="text-xs text-gh-text-muted mt-1">Time</p>
+          </div>
+          <div 
+            className={`rounded-lg bg-gh-canvas-subtle p-3 text-center transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            style={{ transitionDelay: "750ms" }}
+          >
+            <p className="text-2xl font-bold text-white">{bugCount}</p>
+            <p className="text-xs text-gh-text-muted mt-1">{bugCount === 1 ? "Bug" : "Bugs"}</p>
+          </div>
+          <div 
+            className={`rounded-lg bg-gh-canvas-subtle p-3 text-center transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            style={{ transitionDelay: "850ms" }}
+          >
+            <p className={`text-2xl font-bold ${difficulty?.color || "text-white"}`}>
+              {difficulty?.label || "—"}
+            </p>
+            <p className="text-xs text-gh-text-muted mt-1">Level</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -264,6 +362,7 @@ export function ScorePanel({
           summary: existingResult.analysisSummary || "",
           isPerfect: existingResult.analysisIsPerfect,
           feedback: existingResult.analysisFeedback || [],
+          grade: existingResult.grade, // Include the grade from the saved result
         });
         // Trigger the reveal animation after content is set
         setTimeout(() => setAnalysisRevealed(true), 50);
@@ -306,18 +405,25 @@ export function ScorePanel({
   const repoFullName = stressMetadata
     ? `${stressMetadata.owner}/${stressMetadata.repo}`
     : null;
-  const scoreRating = calculateScoreRating(
-    stressMetadata?.stressLevel,
-    timeMs
-  );
+  
+  // Score rating is determined by AI analysis - use the grade from analysis result
+  // If we have an existing result, use its grade; if we have fresh analysis, use that
+  const aiGrade = analysisResult?.grade || existingResult?.grade;
+  const scoreRating = aiGrade && SCORE_RATINGS[aiGrade] 
+    ? SCORE_RATINGS[aiGrade] 
+    : SCORE_RATINGS.C; // Fallback, but should only be used after analysis
 
   const bugCount = stressMetadata?.bugCount || 1;
+  
+  // Whether we have a grade (either from fresh analysis or existing result)
+  const hasGrade = !!(analysisResult?.grade || existingResult?.grade);
 
   /**
    * Saves the stress test result to the database using the mutation hook.
    * Called after analysis completes successfully.
+   * Uses the AI-determined grade from the analysis result.
    * 
-   * @param analysis - The AI analysis result
+   * @param analysis - The AI analysis result including the grade
    */
   const handleSaveResult = async (analysis: AnalyzeResponse) => {
     if (!stressMetadata?.buggerId) {
@@ -328,7 +434,7 @@ export function ScorePanel({
     try {
       await saveResult({
         buggerId: stressMetadata.buggerId,
-        grade: scoreRating.grade,
+        grade: analysis.grade, // Use AI-determined grade
         timeMs,
         startCommitSha: startCommit.sha,
         completeCommitSha: completeCommit.sha,
@@ -377,6 +483,7 @@ export function ScorePanel({
           owner: stressMetadata.owner,
           repo: stressMetadata.repo,
           sha: completeCommit.sha,
+          timeMs, // Pass time so AI can factor it into the grade
           stressMetadata,
         }),
       });
@@ -455,7 +562,16 @@ export function ScorePanel({
     }
   };
 
-  // Props for score card components
+  // Props for time-only card (before analysis)
+  const timeOnlyCardProps: TimeOnlyCardProps = {
+    timeDifference,
+    bugCount,
+    difficulty,
+    repoFullName,
+    isVisible,
+  };
+
+  // Props for score card components (after analysis)
   const scoreCardProps: ScoreCardProps = {
     scoreRating,
     timeDifference,
@@ -470,8 +586,8 @@ export function ScorePanel({
 
   return (
     <div className={`flex h-full flex-col gap-4 overflow-y-auto pt-10 transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}>
-      {/* View Toggle - shown when analyzing or analysis results exist */}
-      {(analyzing || analysisResult) && (
+      {/* View Toggle - shown only when we have a grade (analysis complete) */}
+      {hasGrade && (
         <ToggleGroup
           options={[
             { value: "analysis", label: "Analysis", icon: SparklesIcon },
@@ -482,11 +598,37 @@ export function ScorePanel({
         />
       )}
 
-      {/* Score Card - slim when showing analysis mode, full otherwise */}
-      {showingAnalysisMode ? (
+      {/* Card display logic:
+          - Before analysis (no grade): show TimeOnlyCard
+          - After analysis with grade:
+            - If showing analysis mode: slim score card
+            - If showing score view: full score card
+      */}
+      {!hasGrade && !analyzing ? (
+        <TimeOnlyCard {...timeOnlyCardProps} />
+      ) : hasGrade && showingAnalysisMode ? (
         <SlimScoreCard {...scoreCardProps} />
-      ) : (
+      ) : hasGrade ? (
         <FullScoreCard {...scoreCardProps} />
+      ) : (
+        // During analysis loading, show a placeholder slim card
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas-default border border-gh-border p-[2px]">
+          <div className="rounded-[10px] bg-gh-canvas-default px-4 py-3">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gh-canvas-subtle animate-pulse">
+                <SparklesIcon className="h-6 w-6 text-gh-accent" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-white">
+                    Analyzing...
+                  </h2>
+                </div>
+                <p className="text-xs text-gh-text-muted truncate">AI is determining your grade</p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Analyze Button - only when not analyzing, no result yet, and not checking for existing */}

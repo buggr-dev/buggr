@@ -126,6 +126,9 @@ model Bugger {
   noteRead    Boolean  @default(false)   // Bug Report notification read
   changesRead Boolean  @default(false)   // Branch Changes notification read
 
+  // Completion - updated when user completes and analyzes the challenge
+  grade       String?  // AI-determined grade: "A", "B", "C", "D", "F" (null until completed)
+
   // Timing
   createdAt       DateTime @default(now()) // Request started (overridden at creation time)
   executedAt      DateTime?               // When buggering finished and was persisted
@@ -140,6 +143,7 @@ model Bugger {
   @@index([owner, repo])
   @@index([branchName])
   @@index([createdAt])
+  @@index([grade])
 }
 
 /// A "Result" - created when user completes and analyzes their fix

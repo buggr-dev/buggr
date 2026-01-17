@@ -82,22 +82,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the Result record
-    const result = await prisma.result.create({
-      data: {
-        buggerId: body.buggerId,
-        grade: body.grade,
-        timeMs: body.timeMs,
-        startCommitSha: body.startCommitSha,
-        completeCommitSha: body.completeCommitSha,
-        analysisSummary: body.analysisSummary,
-        analysisIsPerfect: body.analysisIsPerfect ?? false,
-        // Cast to Prisma.InputJsonValue for JSON field compatibility
-        ...(body.analysisFeedback && { 
-          analysisFeedback: body.analysisFeedback as unknown as Prisma.InputJsonValue 
-        }),
-      },
-    });
+    // Create the Result record and update the Bugger's grade in a transaction
+    const [result] = await prisma.$transaction([
+      prisma.result.create({
+        data: {
+          buggerId: body.buggerId,
+          grade: body.grade,
+          timeMs: body.timeMs,
+          startCommitSha: body.startCommitSha,
+          completeCommitSha: body.completeCommitSha,
+          analysisSummary: body.analysisSummary,
+          analysisIsPerfect: body.analysisIsPerfect ?? false,
+          // Cast to Prisma.InputJsonValue for JSON field compatibility
+          ...(body.analysisFeedback && { 
+            analysisFeedback: body.analysisFeedback as unknown as Prisma.InputJsonValue 
+          }),
+        },
+      }),
+      // Also update the grade on the Bugger for easier access
+      prisma.bugger.update({
+        where: { id: body.buggerId },
+        data: { grade: body.grade },
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
