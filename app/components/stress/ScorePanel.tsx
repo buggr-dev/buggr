@@ -585,240 +585,246 @@ export function ScorePanel({
   const showingAnalysisMode = analyzing || (analysisResult && showAnalysisView);
 
   return (
-    <div className={`flex h-full flex-col gap-4 overflow-y-auto pt-10 transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}>
-      {/* View Toggle - shown only when we have a grade (analysis complete) and not initializing */}
-      {hasGrade && !isInitializing && (
-        <ToggleGroup
-          options={[
-            { value: "analysis", label: "Analysis", icon: SparklesIcon },
-            { value: "score", label: "Score", icon: TrophyIcon },
-          ]}
-          value={showAnalysisView ? "analysis" : "score"}
-          onChange={(val) => setShowAnalysisView(val === "analysis")}
-        />
-      )}
+    <div className={`flex flex-1 h-full min-h-0 flex-col overflow-hidden pt-10 transition-all duration-500 ease-out ${isVisible ? "opacity-100" : "opacity-0"}`}>
+      {/* Fixed Header Section - Toggle + Score Card (always visible) */}
+      <div className="shrink-0 space-y-4 pb-4">
+        {/* View Toggle - shown only when we have a grade (analysis complete) and not initializing */}
+        {hasGrade && !isInitializing && (
+          <ToggleGroup
+            options={[
+              { value: "analysis", label: "Analysis", icon: SparklesIcon },
+              { value: "score", label: "Score", icon: TrophyIcon },
+            ]}
+            value={showAnalysisView ? "analysis" : "score"}
+            onChange={(val) => setShowAnalysisView(val === "analysis")}
+          />
+        )}
 
-      {/* Card display logic:
-          - While initializing (checking for existing result or syncing state): show loading skeleton
-          - Before analysis (no grade): show TimeOnlyCard
-          - After analysis with grade:
-            - If showing analysis mode: slim score card
-            - If showing score view: full score card
-          - During analysis: show analyzing placeholder
-      */}
-      {isInitializing ? (
-        // Loading skeleton while checking for existing result
-        <div 
-          className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas-default border border-gh-border p-[2px] transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"}`}
-          style={{ transitionDelay: "100ms" }}
-        >
-          <div className="rounded-[14px] bg-gh-canvas-default p-5">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <BuggrIcon className="h-4 w-4 text-gh-success" />
-                <span className="text-xs font-semibold tracking-wide text-white uppercase">Buggr</span>
-              </div>
-              <div className="h-4 w-24 bg-gh-canvas-subtle rounded animate-pulse" />
-            </div>
-            <div className="text-center mb-6">
-              <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gh-canvas-subtle mb-3 animate-pulse" />
-              <div className="h-6 w-32 bg-gh-canvas-subtle rounded mx-auto mb-2 animate-pulse" />
-              <div className="h-4 w-48 bg-gh-canvas-subtle rounded mx-auto animate-pulse" />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-lg bg-gh-canvas-subtle p-3 text-center">
-                  <div className="h-8 w-12 bg-gh-canvas-default rounded mx-auto mb-1 animate-pulse" />
-                  <div className="h-3 w-8 bg-gh-canvas-default rounded mx-auto animate-pulse" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : !hasGrade && !analyzing ? (
-        <TimeOnlyCard {...timeOnlyCardProps} />
-      ) : hasGrade && showingAnalysisMode ? (
-        <SlimScoreCard {...scoreCardProps} />
-      ) : hasGrade ? (
-        <FullScoreCard {...scoreCardProps} />
-      ) : (
-        // During analysis loading, show a placeholder slim card
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas-default border border-gh-border p-[2px]">
-          <div className="rounded-[10px] bg-gh-canvas-default px-4 py-3">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gh-canvas-subtle animate-pulse">
-                <SparklesIcon className="h-6 w-6 text-gh-accent" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-white">
-                    Analyzing...
-                  </h2>
-                </div>
-                <p className="text-xs text-gh-text-muted truncate">AI is determining your grade</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Analyze Button - only when not analyzing, no result yet, and not checking for existing */}
-      {!analyzing && !analysisResult && !isCheckingExisting && (
-        <div 
-          className={`transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-          style={{ transitionDelay: "900ms" }}
-        >
-          <Button 
-            variant="primary" 
-            className="w-full" 
-            onClick={handleAnalyzeCode}
-            disabled={!stressMetadata}
-          >
-            <SparklesIcon className="h-4 w-4" />
-            Analyze Code
-          </Button>
-        </div>
-      )}
-
-      {/* Loading Progress - shown in analysis view while analyzing */}
-      {analyzing && showAnalysisView && (
-        <LoadingProgress
-          steps={ANALYSIS_STEPS}
-          currentStep={analysisStep}
-          title="Analyzing your code"
-          subtitle="AI is reviewing your fix..."
-        />
-      )}
-
-      {/* Analysis Error */}
-      {analysisError && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
-          <p className="text-sm text-red-400">{analysisError}</p>
-        </div>
-      )}
-
-      {/* Analysis Results - shown when analysis exists and analysis view is active */}
-      {analysisResult && showAnalysisView && (
-        <div className="space-y-3">
-          {/* Header */}
-          <h3 
-            className={`text-xs font-semibold tracking-wide text-gh-text-muted uppercase transition-all duration-500 ease-out ${analysisRevealed ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}
-          >
-            Analysis
-          </h3>
-          
-          {/* Summary */}
+        {/* Card display logic:
+            - While initializing (checking for existing result or syncing state): show loading skeleton
+            - Before analysis (no grade): show TimeOnlyCard
+            - After analysis with grade:
+              - If showing analysis mode: slim score card
+              - If showing score view: full score card
+            - During analysis: show analyzing placeholder
+        */}
+        {isInitializing ? (
+          // Loading skeleton while checking for existing result
           <div 
-            className={`rounded-lg border p-3 transition-all duration-500 ease-out ${analysisResult.isPerfect ? "border-green-500/30 bg-green-500/10" : "border-gh-border bg-gh-canvas-subtle"} ${analysisRevealed ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}
+            className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas-default border border-gh-border p-[2px] transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"}`}
             style={{ transitionDelay: "100ms" }}
           >
-            <p className={`text-sm font-medium ${analysisResult.isPerfect ? "text-green-400" : "text-white"}`}>
-              {analysisResult.summary}
-            </p>
+            <div className="rounded-[14px] bg-gh-canvas-default p-5">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <BuggrIcon className="h-4 w-4 text-gh-success" />
+                  <span className="text-xs font-semibold tracking-wide text-white uppercase">Buggr</span>
+                </div>
+                <div className="h-4 w-24 bg-gh-canvas-subtle rounded animate-pulse" />
+              </div>
+              <div className="text-center mb-6">
+                <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gh-canvas-subtle mb-3 animate-pulse" />
+                <div className="h-6 w-32 bg-gh-canvas-subtle rounded mx-auto mb-2 animate-pulse" />
+                <div className="h-4 w-48 bg-gh-canvas-subtle rounded mx-auto animate-pulse" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-lg bg-gh-canvas-subtle p-3 text-center">
+                    <div className="h-8 w-12 bg-gh-canvas-default rounded mx-auto mb-1 animate-pulse" />
+                    <div className="h-3 w-8 bg-gh-canvas-default rounded mx-auto animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+        ) : !hasGrade && !analyzing ? (
+          <TimeOnlyCard {...timeOnlyCardProps} />
+        ) : hasGrade && showingAnalysisMode ? (
+          <SlimScoreCard {...scoreCardProps} />
+        ) : hasGrade ? (
+          <FullScoreCard {...scoreCardProps} />
+        ) : (
+          // During analysis loading, show a placeholder slim card
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas-default border border-gh-border p-[2px]">
+            <div className="rounded-[10px] bg-gh-canvas-default px-4 py-3">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gh-canvas-subtle animate-pulse">
+                  <SparklesIcon className="h-6 w-6 text-gh-accent" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-white">
+                      Analyzing...
+                    </h2>
+                  </div>
+                  <p className="text-xs text-gh-text-muted truncate">AI is determining your grade</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-          {/* Feedback Items */}
-          {analysisResult.feedback.length > 0 && (
-            <div className="space-y-2">
-              {analysisResult.feedback.map((item, index) => (
-                <div 
-                  key={index}
-                  className={`rounded-lg border p-3 transition-all duration-500 ease-out ${getFeedbackBgColor(item.type)} ${analysisRevealed ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
-                  style={{ transitionDelay: `${200 + index * 100}ms` }}
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="mt-0.5 shrink-0">
-                      {getFeedbackIcon(item.type)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-white">{item.title}</p>
-                      <p className="text-xs text-gh-text-muted mt-1">{item.message}</p>
-                      {/* Show improvement suggestion for tips */}
-                      {item.improvement && (
-                        <div className="mt-2 rounded-md bg-gh-canvas-default/50 p-2">
-                          <p className="text-xs font-medium text-purple-300 mb-1">💡 Better approach:</p>
-                          <p className="text-xs text-gh-text-muted">{item.improvement}</p>
-                        </div>
-                      )}
-                      {item.file && (
-                        <code className="mt-2 inline-block rounded bg-gh-canvas-default px-1.5 py-0.5 font-mono text-xs text-gh-accent">
-                          {item.file}
-                        </code>
-                      )}
+        {/* Analyze Button - only when not analyzing, no result yet, and not checking for existing */}
+        {!analyzing && !analysisResult && !isCheckingExisting && (
+          <div 
+            className={`transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            style={{ transitionDelay: "900ms" }}
+          >
+            <Button 
+              variant="primary" 
+              className="w-full" 
+              onClick={handleAnalyzeCode}
+              disabled={!stressMetadata}
+            >
+              <SparklesIcon className="h-4 w-4" />
+              Analyze Code
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Scrollable Content Section - Analysis/Timeline */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pb-2">
+        {/* Loading Progress - shown in analysis view while analyzing */}
+        {analyzing && showAnalysisView && (
+          <LoadingProgress
+            steps={ANALYSIS_STEPS}
+            currentStep={analysisStep}
+            title="Analyzing your code"
+            subtitle="AI is reviewing your fix..."
+          />
+        )}
+
+        {/* Analysis Error */}
+        {analysisError && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+            <p className="text-sm text-red-400">{analysisError}</p>
+          </div>
+        )}
+
+        {/* Analysis Results - shown when analysis exists and analysis view is active */}
+        {analysisResult && showAnalysisView && (
+          <div className="space-y-3">
+            {/* Header */}
+            <h3 
+              className={`text-xs font-semibold tracking-wide text-gh-text-muted uppercase transition-all duration-500 ease-out ${analysisRevealed ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}
+            >
+              Analysis
+            </h3>
+            
+            {/* Summary */}
+            <div 
+              className={`rounded-lg border p-3 transition-all duration-500 ease-out ${analysisResult.isPerfect ? "border-green-500/30 bg-green-500/10" : "border-gh-border bg-gh-canvas-subtle"} ${analysisRevealed ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}
+              style={{ transitionDelay: "100ms" }}
+            >
+              <p className={`text-sm font-medium ${analysisResult.isPerfect ? "text-green-400" : "text-white"}`}>
+                {analysisResult.summary}
+              </p>
+            </div>
+
+            {/* Feedback Items */}
+            {analysisResult.feedback.length > 0 && (
+              <div className="space-y-2">
+                {analysisResult.feedback.map((item, index) => (
+                  <div 
+                    key={index}
+                    className={`rounded-lg border p-3 transition-all duration-500 ease-out ${getFeedbackBgColor(item.type)} ${analysisRevealed ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
+                    style={{ transitionDelay: `${200 + index * 100}ms` }}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="mt-0.5 shrink-0">
+                        {getFeedbackIcon(item.type)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-white">{item.title}</p>
+                        <p className="text-xs text-gh-text-muted mt-1">{item.message}</p>
+                        {/* Show improvement suggestion for tips */}
+                        {item.improvement && (
+                          <div className="mt-2 rounded-md bg-gh-canvas-default/50 p-2">
+                            <p className="text-xs font-medium text-purple-300 mb-1">💡 Better approach:</p>
+                            <p className="text-xs text-gh-text-muted">{item.improvement}</p>
+                          </div>
+                        )}
+                        {item.file && (
+                          <code className="mt-2 inline-block rounded bg-gh-canvas-default px-1.5 py-0.5 font-mono text-xs text-gh-accent">
+                            {item.file}
+                          </code>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Timeline - shown when no analysis OR when score view is active */}
-      {(!analysisResult || !showAnalysisView) && (
-      <div 
-        className={`space-y-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-        style={{ transitionDelay: "1000ms" }}
-      >
-        <h3 className="text-xs font-semibold tracking-wide text-gh-text-muted uppercase">Timeline</h3>
-        
-        <div className="space-y-2">
-          {/* Start */}
-          <div 
-            className={`flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
-            style={{ transitionDelay: "1100ms" }}
-          >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/20">
-              <span className="text-sm">🚀</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-white truncate">
-                {startCommit.commit.message.split("\n")[0]}
-              </p>
-              <p className="text-xs text-gh-text-muted">
-                {formatShortDate(startCommit.commit.author.date)}
-              </p>
-            </div>
-            <code className="shrink-0 rounded bg-gh-canvas-default px-2 py-0.5 font-mono text-xs text-gh-accent">
-              {startCommit.sha.substring(0, 7)}
-            </code>
+                ))}
+              </div>
+            )}
           </div>
+        )}
 
-          {/* Connector */}
-          <div className="flex justify-center">
+        {/* Timeline - shown when no analysis OR when score view is active */}
+        {(!analysisResult || !showAnalysisView) && (
+        <div 
+          className={`space-y-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          style={{ transitionDelay: "1000ms" }}
+        >
+          <h3 className="text-xs font-semibold tracking-wide text-gh-text-muted uppercase">Timeline</h3>
+          
+          <div className="space-y-2">
+            {/* Start */}
             <div 
-              className={`w-0.5 bg-gh-border transition-all duration-300 ease-out ${isVisible ? "h-4" : "h-0"}`}
-              style={{ transitionDelay: "1200ms" }}
-            />
-          </div>
+              className={`flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
+              style={{ transitionDelay: "1100ms" }}
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/20">
+                <span className="text-sm">🚀</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-white truncate">
+                  {startCommit.commit.message.split("\n")[0]}
+                </p>
+                <p className="text-xs text-gh-text-muted">
+                  {formatShortDate(startCommit.commit.author.date)}
+                </p>
+              </div>
+              <code className="shrink-0 rounded bg-gh-canvas-default px-2 py-0.5 font-mono text-xs text-gh-accent">
+                {startCommit.sha.substring(0, 7)}
+              </code>
+            </div>
 
-          {/* Complete */}
-          <div 
-            className={`flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
-            style={{ transitionDelay: "1250ms" }}
-          >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/20">
-              <span className="text-sm">✅</span>
+            {/* Connector */}
+            <div className="flex justify-center">
+              <div 
+                className={`w-0.5 bg-gh-border transition-all duration-300 ease-out ${isVisible ? "h-4" : "h-0"}`}
+                style={{ transitionDelay: "1200ms" }}
+              />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-white truncate">
-                {completeCommit.commit.message.split("\n")[0]}
-              </p>
-              <p className="text-xs text-gh-text-muted">
-                {formatShortDate(completeCommit.commit.author.date)}
-              </p>
+
+            {/* Complete */}
+            <div 
+              className={`flex items-center gap-3 rounded-lg border border-gh-border bg-gh-canvas-subtle p-3 transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
+              style={{ transitionDelay: "1250ms" }}
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/20">
+                <span className="text-sm">✅</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-white truncate">
+                  {completeCommit.commit.message.split("\n")[0]}
+                </p>
+                <p className="text-xs text-gh-text-muted">
+                  {formatShortDate(completeCommit.commit.author.date)}
+                </p>
+              </div>
+              <code className="shrink-0 rounded bg-gh-canvas-default px-2 py-0.5 font-mono text-xs text-gh-accent">
+                {completeCommit.sha.substring(0, 7)}
+              </code>
             </div>
-            <code className="shrink-0 rounded bg-gh-canvas-default px-2 py-0.5 font-mono text-xs text-gh-accent">
-              {completeCommit.sha.substring(0, 7)}
-            </code>
           </div>
         </div>
+        )}
       </div>
-      )}
 
-      {/* Footer */}
+      {/* Fixed Footer */}
       <div 
-        className={`mt-auto pt-4 border-t border-gh-border transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+        className={`shrink-0 mt-auto pt-4 border-t border-gh-border transition-all duration-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         style={{ transitionDelay: "1350ms" }}
       >
         <div className="flex items-center justify-between">
