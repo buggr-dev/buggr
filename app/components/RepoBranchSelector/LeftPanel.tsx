@@ -10,7 +10,7 @@ import { CommitCard } from "@/app/components/commits/CommitCard";
 import { BranchCard } from "@/app/components/branches";
 import { Container } from "@/app/components/Container";
 import { PublicReposList } from "@/app/components/PublicReposList";
-import { BuggrIcon, CloseIcon, TrashIcon, CheckIcon, CopyIcon, GitBranchIcon } from "@/app/components/icons";
+import { BuggrIcon, CloseIcon, TrashIcon, CheckIcon, CopyIcon } from "@/app/components/icons";
 
 interface LeftPanelProps {
   // Repos
@@ -192,7 +192,7 @@ export function LeftPanel({
     return (
       <div className="mt-4 flex min-h-0 flex-col">
         <div className="mb-3 flex items-center gap-2">
-          <GitBranchIcon className="h-4 w-4 text-gh-text-muted" />
+          <BuggrIcon className="h-4 w-4 text-gh-text-muted" />
           <h3 className="text-sm font-medium text-gh-text-muted">Branches</h3>
         </div>
 
@@ -201,7 +201,7 @@ export function LeftPanel({
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-gh-border border-t-gh-success" />
           </Container>
         ) : branches.length === 0 ? (
-          <EmptyState icon={<GitBranchIcon className="h-full w-full" />} title="No branches found" size="sm" />
+          <EmptyState icon={<BuggrIcon className="h-full w-full" />} title="No branches found" size="sm" />
         ) : (
           <Container scrollable className={selectedBranch ? "max-h-48" : ""}>
             {branches.map((branch) => (

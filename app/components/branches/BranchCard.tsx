@@ -1,7 +1,7 @@
 "use client";
 
 import type { GitHubBranch } from "@/lib/github";
-import { GitBranchIcon } from "@/app/components/icons";
+import { BuggrIcon } from "@/app/components/icons";
 
 interface BranchCardProps {
   /**
@@ -54,7 +54,7 @@ export function BranchCard({ branch, isSelected, onClick }: BranchCardProps) {
               : "bg-gh-border text-gh-text-muted"
           }`}
         >
-          <GitBranchIcon className="h-4 w-4" />
+          <BuggrIcon className="h-4 w-4" />
         </div>
       </div>
 

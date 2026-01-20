@@ -30,7 +30,6 @@ export * from "./ArrowRightIcon";
 export * from "./TrophyIcon";
 export * from "./BuggrIcon";
 export * from "./CoinIcon";
-export * from "./GitBranchIcon";
 
 // Re-export the shared types
 export type { IconProps } from "./types";
