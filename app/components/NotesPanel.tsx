@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useNotes } from "@/app/context/NotesContext";
 import {
   useNotifications,
@@ -14,7 +15,6 @@ import {
   BellIcon,
   CloseIcon,
   GitHubIcon,
-  ExternalLinkIcon,
   LightningIcon,
   CheckIcon,
   CopyIcon,
@@ -118,6 +118,7 @@ export function NotesPanel() {
   const [activeSections, setActiveSections] = useState<Record<string, ActiveSection>>({});
   const [pendingReads, setPendingReads] = useState<Set<string>>(new Set());
 
+  const router = useRouter();
   const { isPanelOpen, openPanel, closePanel } = useNotes();
 
   // Fetch notifications from database (always fetch both notes and changes together)
@@ -281,11 +282,20 @@ export function NotesPanel() {
   }
 
   /**
-   * Generates a GitHub branch URL from repo and branch names.
+   * Generates an internal dashboard URL for a branch.
    */
   function getBranchUrl(repoName?: string, branchName?: string, repoOwner?: string): string | null {
     if (!repoName || !branchName || !repoOwner) return null;
-    return `https://github.com/${repoOwner}/${repoName}/tree/${encodeURIComponent(branchName)}`;
+    // Don't encode the slash in repo - dashboard expects "owner/repo" format
+    return `/dashboard?repo=${repoOwner}/${repoName}&branch=${encodeURIComponent(branchName)}`;
+  }
+
+  /**
+   * Navigates to a branch in the dashboard and closes the panel.
+   */
+  function navigateToBranch(url: string) {
+    closePanel();
+    router.push(url);
   }
 
   // Filter notifications based on showAll toggle
@@ -411,16 +421,13 @@ export function NotesPanel() {
                     {(branchName || repoName) && (
                       <div className="mb-3">
                         {branchUrl ? (
-                          <a
-                            href={branchUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={() => navigateToBranch(branchUrl)}
                             className="inline-flex items-center gap-1.5 rounded-md border border-gh-border bg-gh-canvas-subtle px-2 py-1 text-xs text-gh-accent transition-colors hover:border-gh-accent hover:bg-gh-accent/10"
                           >
                             <GitHubIcon className="h-3 w-3" />
                             <span className="font-mono">{branchName}</span>
-                            <ExternalLinkIcon className="h-3 w-3" />
-                          </a>
+                          </button>
                         ) : (
                           <div className="flex items-center gap-2 text-xs text-gh-text-muted">
                             <LightningIcon className="h-3 w-3" />
