@@ -6,8 +6,9 @@ import { formatFullDate } from "@/lib/date";
 import { Button } from "@/app/components/inputs/Button";
 import { EmptyState, EmptyStateIcons } from "@/app/components/EmptyState";
 import { FileChangeList } from "@/app/components/commits/FileChangeList";
+import { useState, useEffect, useRef } from "react";
 import { CreateBranchForm } from "@/app/components/stress/CreateBranchForm";
-import { HowToPlayModal } from "@/app/components/stress/HowToPlayModal";
+import { HowToPlayModal, useHowToPlayDismissed } from "@/app/components/stress/HowToPlayModal";
 import { ScorePanel, BugReportSection } from "@/app/components/stress/ScorePanel";
 import {
   GitHubIcon,
@@ -107,6 +108,22 @@ export function RightPanel({
   copiedBranchLink,
   onCopyBranchLink,
 }: RightPanelProps) {
+  const howToPlayDismissed = useHowToPlayDismissed();
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const hasShownModalRef = useRef(false);
+
+  // Show modal when buggering starts (if not permanently dismissed)
+  useEffect(() => {
+    if (creatingBranch && !howToPlayDismissed && !hasShownModalRef.current) {
+      setShowHowToPlay(true);
+      hasShownModalRef.current = true;
+    }
+    // Reset the ref when not creating a branch (for next time)
+    if (!creatingBranch) {
+      hasShownModalRef.current = false;
+    }
+  }, [creatingBranch, howToPlayDismissed]);
+
   return (
     <div className="flex h-full w-[60%] flex-col overflow-hidden p-6">
       {/* Header */}
@@ -281,17 +298,10 @@ export function RightPanel({
             )}
           </div>
 
-          {/* How to Play Modal - shown after branch creation */}
+          {/* How to Play Modal - shown when buggering starts */}
           <HowToPlayModal
-            isOpen={!!branchSuccess}
-            onClose={() => setBranchSuccess(null)}
-            branchName={branchSuccess || ""}
-            onShowBranch={() => {
-              if (branchSuccess) {
-                onShowBranch(branchSuccess);
-                setBranchSuccess(null);
-              }
-            }}
+            isOpen={showHowToPlay}
+            onClose={() => setShowHowToPlay(false)}
           />
           </div>
 

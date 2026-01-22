@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Modal } from "@/app/components/Modal";
 import { Button } from "@/app/components/inputs/Button";
 import { Card } from "@/app/components/Card";
@@ -7,15 +8,14 @@ import {
   CheckIcon,
   TerminalIcon,
   SparklesIcon,
-  ArrowRightIcon,
   TrophyIcon,
 } from "@/app/components/icons";
+
+const LOCALSTORAGE_KEY = "buggr-how-to-play-dismissed";
 
 interface HowToPlayModalProps {
   isOpen: boolean;
   onClose: () => void;
-  branchName: string;
-  onShowBranch: () => void;
 }
 
 interface StepProps {
@@ -48,16 +48,34 @@ function Step({ number, icon, title, description, code }: StepProps) {
   );
 }
 
+export function useHowToPlayDismissed() {
+  const [isDismissed, setIsDismissed] = useState(true); // Default true to prevent flash
+
+  useEffect(() => {
+    const stored = localStorage.getItem(LOCALSTORAGE_KEY);
+    setIsDismissed(stored === "true");
+  }, []);
+
+  return isDismissed;
+}
+
 export function HowToPlayModal({
   isOpen,
   onClose,
-  branchName,
-  onShowBranch,
 }: HowToPlayModalProps) {
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  const handleClose = () => {
+    if (dontShowAgain) {
+      localStorage.setItem(LOCALSTORAGE_KEY, "true");
+    }
+    onClose();
+  };
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="max-w-lg"
       showCloseButton={true}
       closeOnBackdrop={false}
@@ -65,19 +83,14 @@ export function HowToPlayModal({
       <div className="p-5">
         {/* Header */}
         <div className="mb-5 text-center">
-          <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-gh-success/30 to-green-600/20">
-            <CheckIcon className="h-7 w-7 text-gh-success" />
+          <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-gh-danger/30 to-red-600/20">
+            <span className="text-3xl">🐛</span>
           </div>
-          <h2 className="text-lg font-bold text-white">Branch Created!</h2>
+          <h2 className="text-lg font-bold text-white">How to Play</h2>
           <p className="mt-1 text-sm text-gh-text-muted">
-            Ready to debug? Here&apos;s how to play:
+            Here&apos;s how to debug and get your score:
           </p>
         </div>
-
-        {/* Branch name */}
-        <Card variant="inset" padded className="mb-5 p-3 text-center">
-          <code className="font-mono text-sm text-gh-success">{branchName}</code>
-        </Card>
 
         {/* Steps */}
         <div className="mb-5 space-y-4">
@@ -123,16 +136,21 @@ export function HowToPlayModal({
           </div>
         </Card>
 
+        {/* Don't show again checkbox */}
+        <label className="mb-4 flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={dontShowAgain}
+            onChange={(e) => setDontShowAgain(e.target.checked)}
+            className="h-4 w-4 rounded border-gh-border bg-gh-canvas-subtle text-gh-accent focus:ring-gh-accent focus:ring-offset-0"
+          />
+          <span className="text-sm text-gh-text-muted">Don&apos;t show this again</span>
+        </label>
+
         {/* Actions */}
-        <div className="flex gap-3">
-          <Button variant="ghost" onClick={onClose} className="flex-1">
-            Got it
-          </Button>
-          <Button variant="primary" onClick={onShowBranch} className="flex-1">
-            <ArrowRightIcon className="h-4 w-4" />
-            Show Branch
-          </Button>
-        </div>
+        <Button variant="primary" onClick={handleClose} fullWidth>
+          Got it
+        </Button>
       </div>
     </Modal>
   );
