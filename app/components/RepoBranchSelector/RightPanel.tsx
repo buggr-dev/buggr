@@ -7,7 +7,7 @@ import { Button } from "@/app/components/inputs/Button";
 import { EmptyState, EmptyStateIcons } from "@/app/components/EmptyState";
 import { FileChangeList } from "@/app/components/commits/FileChangeList";
 import { CreateBranchForm } from "@/app/components/stress/CreateBranchForm";
-import { BranchSuccessCard } from "@/app/components/stress/BranchSuccessCard";
+import { HowToPlayModal } from "@/app/components/stress/HowToPlayModal";
 import { ScorePanel, BugReportSection } from "@/app/components/stress/ScorePanel";
 import {
   GitHubIcon,
@@ -281,17 +281,18 @@ export function RightPanel({
             )}
           </div>
 
-          {/* Branch Success Message */}
-          {branchSuccess && (
-            <BranchSuccessCard
-              branchName={branchSuccess}
-              onDismiss={() => setBranchSuccess(null)}
-              onShowBranch={() => {
+          {/* How to Play Modal - shown after branch creation */}
+          <HowToPlayModal
+            isOpen={!!branchSuccess}
+            onClose={() => setBranchSuccess(null)}
+            branchName={branchSuccess || ""}
+            onShowBranch={() => {
+              if (branchSuccess) {
                 onShowBranch(branchSuccess);
                 setBranchSuccess(null);
-              }}
-            />
-          )}
+              }
+            }}
+          />
           </div>
 
           {/* Create Branch Form - pinned outside scroll area */}
