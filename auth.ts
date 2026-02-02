@@ -11,10 +11,10 @@ interface GitHubProfile {
 }
 
 /** Coins awarded to inviter when an invited user signs up */
-const SIGNUP_BONUS_COINS = 30;
+const SIGNUP_BONUS_COINS = 50;
 
 /** Default starting coins for new users */
-const STARTING_COINS = 10;
+const STARTING_COINS = 50;
 
 /**
  * NextAuth.js configuration with GitHub OAuth provider and Prisma adapter.
