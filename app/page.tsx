@@ -16,6 +16,7 @@ import {
   SparklesIcon,
   InfoIcon,
   TrophyIcon,
+  DocumentIcon,
 } from "./components/icons";
 
 /** GitHub repository URL for "View on GitHub" buttons in website mode */
@@ -24,12 +25,40 @@ const GITHUB_REPO_URL = "https://github.com/buggr-dev/buggr";
 /**
  * Landing/info page shown to unauthenticated users.
  * Middleware handles redirecting authenticated users to /dashboard.
- * 
+ *
  * When WEBSITE_MODE env var is set, login buttons become "View on GitHub" links
  * since authentication only works when running locally.
  */
 export default async function Home() {
   const isWebsiteMode = process.env.WEBSITE_MODE === "true";
+
+  /** Renders either a "View on GitHub" link or a GitHub sign-in form */
+  function AuthButton({ size = "default" }: { size?: "default" | "lg" }) {
+    if (isWebsiteMode) {
+      return (
+        <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+          <Button type="button" variant="primary" size={size}>
+            <GitHubIcon className={size === "lg" ? "h-5 w-5" : "h-4 w-4"} />
+            View on GitHub
+          </Button>
+        </a>
+      );
+    }
+
+    return (
+      <form
+        action={async () => {
+          "use server";
+          await signIn("github", { redirectTo: "/dashboard" });
+        }}
+      >
+        <Button type="submit" variant="primary" size={size}>
+          <GitHubIcon className={size === "lg" ? "h-5 w-5" : "h-4 w-4"} />
+          {size === "lg" ? "Start Playing" : "Log in with GitHub"}
+        </Button>
+      </form>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-gh-canvas">
@@ -47,50 +76,12 @@ export default async function Home() {
 
       {/* Fixed Login Button - slides out when ScrollHeader appears */}
       <FixedLoginButton>
-        {isWebsiteMode ? (
-          <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
-            <Button type="button" variant="primary">
-              <GitHubIcon className="h-4 w-4" />
-              View on GitHub
-            </Button>
-          </a>
-        ) : (
-          <form
-            action={async () => {
-              "use server";
-              await signIn("github", { redirectTo: "/dashboard" });
-            }}
-          >
-            <Button type="submit" variant="primary">
-              <GitHubIcon className="h-4 w-4" />
-              Log in with GitHub
-            </Button>
-          </form>
-        )}
+        <AuthButton />
       </FixedLoginButton>
 
       {/* Scroll-triggered Header */}
       <ScrollHeader>
-        {isWebsiteMode ? (
-          <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
-            <Button type="button" variant="primary">
-              <GitHubIcon className="h-4 w-4" />
-              View on GitHub
-            </Button>
-          </a>
-        ) : (
-          <form
-            action={async () => {
-              "use server";
-              await signIn("github", { redirectTo: "/dashboard" });
-            }}
-          >
-            <Button type="submit" variant="primary">
-              <GitHubIcon className="h-4 w-4" />
-              Log in with GitHub
-            </Button>
-          </form>
-        )}
+        <AuthButton />
       </ScrollHeader>
 
       {/* Main content */}
@@ -98,46 +89,79 @@ export default async function Home() {
         {/* Hero Section */}
         <section className="mb-20 text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-gh-border bg-gh-canvas-subtle px-4 py-1.5 text-sm text-gh-text-muted">
-            <span className="text-lg">🔥</span>
-            A debugging game for developers
+            <span className="text-lg">🎓</span>
+            An educational debugging game for developers
           </div>
           <h2 className="mb-6 text-5xl font-bold tracking-tight text-white md:text-6xl">
-            Are you a{" "}
-            <span className="text-gh-danger-fg underline decoration-wavy decoration-gh-danger decoration-4 underline-offset-4">Vibe</span> Coder{" "}
+            Can you actually{" "}
+            <span className="text-gh-danger-fg underline decoration-wavy decoration-gh-danger decoration-4 underline-offset-4">
+              debug
+            </span>{" "}
             <br className="hidden md:block" />
-            or a{" "}
-            <span className="text-gh-success-fg underline decoration-wavy decoration-gh-success decoration-4 underline-offset-4">Jive</span> Coder?
+            what AI{" "}
+            <span className="text-gh-success-fg underline decoration-wavy decoration-gh-success decoration-4 underline-offset-4">
+              writes
+            </span>
+            ?
           </h2>
           <p className="mx-auto mb-10 max-w-2xl text-lg text-gh-text-muted">
-            We inject realistic bugs into any codebase. You find and fix them.
-            The faster you finish, the better your score.
+            AI generates code faster than ever — but when it breaks, someone has
+            to fix it. Buggr is a game that teaches you to find and fix real bugs
+            in real codebases, building the skill that matters most in the AI era.
           </p>
           <div className="mb-8 flex flex-wrap justify-center gap-3 text-sm text-gh-text-muted">
             <div className="flex items-center gap-2 rounded-full border border-gh-border bg-gh-canvas-subtle px-4 py-2">
+              <span className="text-gh-accent">🧠</span>
+              Learn by doing — fix real bugs, not toy exercises
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-gh-border bg-gh-canvas-subtle px-4 py-2">
               <span className="text-gh-danger-fg">!</span>
-              See if you can complete the run without using code-gen tools
+              No code-gen tools — prove it&apos;s really you
             </div>
           </div>
-          {isWebsiteMode ? (
-            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
-              <Button type="button" variant="primary" size="lg">
-                <GitHubIcon className="h-5 w-5" />
-                View on GitHub
-              </Button>
-            </a>
-          ) : (
-            <form
-              action={async () => {
-                "use server";
-                await signIn("github", { redirectTo: "/dashboard" });
-              }}
-            >
-              <Button type="submit" variant="primary" size="lg">
-                <GitHubIcon className="h-5 w-5" />
-                Start Buggering
-              </Button>
-            </form>
-          )}
+          <AuthButton size="lg" />
+        </section>
+
+        {/* The AI Era Problem */}
+        <section className="mb-16">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
+              <LightbulbIcon className="h-5 w-5 text-gh-success" />
+            </div>
+            <h3 className="text-2xl font-bold text-white">
+              The Most Important Skill in 2025
+            </h3>
+          </div>
+          <div className="rounded-xl border border-gh-border bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas p-8">
+            <p className="mb-4 text-lg leading-relaxed text-gh-text-muted">
+              Cursor, Copilot, ChatGPT — everyone ships faster now. But there&apos;s
+              a growing gap between{" "}
+              <span className="font-semibold text-white">
+                generating code
+              </span>{" "}
+              and{" "}
+              <span className="font-semibold text-white">
+                understanding code.
+              </span>
+            </p>
+            <p className="mb-4 text-lg leading-relaxed text-gh-text-muted">
+              When AI-generated code breaks — and it will — the developer who can
+              read a stack trace, trace the logic, and fix the root cause is{" "}
+              <span className="font-semibold text-gh-success-fg">
+                10x more valuable
+              </span>{" "}
+              than the one who just re-prompts until the errors disappear.
+            </p>
+            <p className="text-lg leading-relaxed text-gh-text-muted">
+              <span className="font-semibold text-white">Buggr</span> is a game
+              that builds that muscle. We inject realistic bugs into codebases and
+              challenge you to find and fix them — under the clock, with no AI
+              help.{" "}
+              <span className="font-semibold text-gh-danger-fg">
+                It&apos;s how you prove you really understand the code, not just the prompts.
+              </span>
+            </p>
+          </div>
         </section>
 
         {/* How It Works Section */}
@@ -151,11 +175,12 @@ export default async function Home() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
               <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold text-white">
-                <span className="text-xl">🤖</span> AI-Generated Bugs
+                <span className="text-xl">🤖</span> AI-Injected Bugs
               </h4>
               <p className="text-sm leading-relaxed text-gh-text-muted">
-                Our AI injects subtle bugs that real developers make — off-by-one errors, 
-                null pointer issues, async/await mistakes, and logic inversions.
+                Our AI injects the kind of bugs real developers hit every day —
+                off-by-one errors, null pointer issues, async/await mistakes, and
+                subtle logic inversions.
               </p>
             </div>
             <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
@@ -163,8 +188,8 @@ export default async function Home() {
                 <span className="text-xl">📊</span> Three Difficulty Levels
               </h4>
               <p className="text-sm leading-relaxed text-gh-text-muted">
-                Easy (1-2 bugs), Medium (2-3 bugs), or Hard (3-5 bugs). 
-                Start with easy to get a feel for it.
+                Easy (1-2 bugs), Medium (2-3 bugs), or Hard (3-5 bugs). Start
+                with easy to build confidence, then level up.
               </p>
             </div>
             <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
@@ -172,46 +197,44 @@ export default async function Home() {
                 <span className="text-xl">🔔</span> Realistic Bug Reports
               </h4>
               <p className="text-sm leading-relaxed text-gh-text-muted">
-                You get vague user complaints like &quot;The posts are showing up blank&quot; or
-                &quot;It crashes when I click that button&quot; — just like real life.
+                You get vague user complaints like &quot;The posts are showing up
+                blank&quot; — just like the real tickets you&apos;ll face on the
+                job.
               </p>
             </div>
             <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
               <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold text-white">
-                <span className="text-xl">📋</span> Share With Others
+                <span className="text-xl">⏱️</span> Timed Challenges
               </h4>
               <p className="text-sm leading-relaxed text-gh-text-muted">
-                Share bug reports with teammates and compare scores. 
-                Great for team challenges or interviews.
+                Every run is timed. The faster you find and fix the bugs, the
+                better your grade. Track your improvement over time.
               </p>
             </div>
             <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
               <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold text-white">
-                <span className="text-xl">🖥️</span> Server-Hosted Runs
+                <span className="text-xl">📋</span> Share & Compare
               </h4>
               <p className="text-sm leading-relaxed text-gh-text-muted">
-                We clone your repo, inject bugs, and track progress in our DB — no
-                local setup or manual Git pulls required.
+                Share bug reports with teammates and compare scores. Great for
+                team challenges, study groups, or interviews.
               </p>
             </div>
             <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
               <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold text-white">
-                <span className="text-xl">🙅‍♂️</span> No Code-Gen
+                <span className="text-xl">🙅‍♂️</span> No Code-Gen Allowed
               </h4>
               <p className="text-sm leading-relaxed text-gh-text-muted">
-                This is a human debugging challenge. Please keep Copilot/Cursor
-                code generation off so your score reflects your own fixes.
+                This is a human debugging challenge. Keep Copilot/Cursor code
+                generation off — your score should reflect your real skills.
               </p>
             </div>
           </div>
 
           {/* Bug report screenshot */}
           <div className="group relative mt-8">
-            {/* Glow effect */}
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-gh-success/20 via-gh-accent/20 to-gh-danger/20 opacity-50 blur-lg transition-opacity group-hover:opacity-75" />
-            
             <div className="relative overflow-hidden rounded-xl border border-gh-border bg-gh-canvas-inset">
-              {/* Window header with dots */}
               <div className="flex items-center gap-3 border-b border-gh-border bg-gh-canvas-subtle px-4 py-3">
                 <div className="flex items-center gap-1.5">
                   <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
@@ -231,41 +254,77 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Why Section */}
+        {/* Tutorial Integration Section */}
         <section className="mb-16">
           <div className="mb-8 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
-              <LightbulbIcon className="h-5 w-5 text-gh-success" />
+              <DocumentIcon className="h-5 w-5 text-gh-accent" />
             </div>
-            <h3 className="text-2xl font-bold text-white">Why Buggr?</h3>
+            <h3 className="text-2xl font-bold text-white">
+              Connect Your Tutorials
+            </h3>
           </div>
-          <div className="rounded-xl border border-gh-border bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas p-8">
+          <div className="rounded-xl border-2 border-gh-accent/40 bg-gradient-to-br from-gh-accent/5 via-gh-canvas-subtle to-gh-canvas p-8">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-gh-accent/10 px-3 py-1 text-xs font-medium text-gh-accent">
+              <SparklesIcon className="h-3.5 w-3.5" />
+              Level up your learning
+            </div>
+            <h4 className="mb-4 text-xl font-bold text-white">
+              Built a project from a tutorial? Prove you actually understand it.
+            </h4>
             <p className="mb-4 text-lg leading-relaxed text-gh-text-muted">
-              AI writes code now. Cursor, Copilot, ChatGPT — everyone&apos;s shipping faster than ever.
-              But{" "}
+              Following along with a tutorial is one thing — truly understanding
+              the codebase is another. Connect any repo you&apos;ve built from a
+              course, guide, or tutorial to Buggr and we&apos;ll inject bugs into
+              it.
+            </p>
+            <p className="mb-6 text-lg leading-relaxed text-gh-text-muted">
+              If you can find and fix bugs in code you&apos;ve written (or
+              followed along to build), you{" "}
               <span className="font-semibold text-white">
-                when it breaks, can you fix it?
+                genuinely understand the architecture
               </span>
+              . If you can&apos;t, you know exactly where to go back and learn
+              more deeply.
             </p>
-            <p className="mb-4 text-lg leading-relaxed text-gh-text-muted">
-              Or are you just re-prompting until the errors go away?
-            </p>
-            <p className="mb-4 text-lg leading-relaxed text-gh-text-muted">
-              Buggr now runs on our server with a connected database, so your repo
-              is cloned, stressed, and tracked remotely. You stay in the browser — no
-              local pulls or setup needed.
-            </p>
-            <p className="text-lg leading-relaxed text-gh-text-muted">
-              <span className="font-semibold text-white">Buggr</span> gives you practice debugging 
-              real codebases with realistic bugs. It&apos;s a way to build actual debugging skills —{" "}
-              <span className="font-semibold text-gh-danger-fg">
-                skills you&apos;ll need when AI-generated code inevitably breaks.
-              </span>
-            </p>
+
+            {/* Use cases */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-lg border border-gh-border bg-gh-canvas p-4">
+                <div className="mb-2 text-2xl">🎓</div>
+                <h5 className="mb-1 text-sm font-semibold text-white">
+                  Students &amp; Bootcampers
+                </h5>
+                <p className="text-xs leading-relaxed text-gh-text-muted">
+                  Finished a course project? Bugger it and prove to yourself (or
+                  your instructor) that you truly get it.
+                </p>
+              </div>
+              <div className="rounded-lg border border-gh-border bg-gh-canvas p-4">
+                <div className="mb-2 text-2xl">📚</div>
+                <h5 className="mb-1 text-sm font-semibold text-white">
+                  Tutorial Creators
+                </h5>
+                <p className="text-xs leading-relaxed text-gh-text-muted">
+                  Add Buggr challenges to your tutorials. Give learners a way to
+                  test their understanding after completing your content.
+                </p>
+              </div>
+              <div className="rounded-lg border border-gh-border bg-gh-canvas p-4">
+                <div className="mb-2 text-2xl">🏢</div>
+                <h5 className="mb-1 text-sm font-semibold text-white">
+                  Teams &amp; Hiring
+                </h5>
+                <p className="text-xs leading-relaxed text-gh-text-muted">
+                  Onboard new hires by having them debug real project code.
+                  Faster than take-home tests, more realistic than LeetCode.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Steps Section */}
+        {/* Getting Started Steps */}
         <section className="mb-16">
           <div className="mb-8 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
@@ -275,9 +334,21 @@ export default async function Home() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {[
-              { step: "1", title: "Connect", desc: "Sign in with GitHub; we securely clone your repo on the server" },
-              { step: "2", title: "Select", desc: "Choose a repo, commit, and difficulty — we seed the bugs" },
-              { step: "3", title: "Debug", desc: "Fix the issues without code-gen tools; faster times = better scores" },
+              {
+                step: "1",
+                title: "Connect",
+                desc: "Sign in with GitHub — we securely clone your repo on the server",
+              },
+              {
+                step: "2",
+                title: "Select",
+                desc: "Choose a repo, commit, and difficulty — we inject the bugs",
+              },
+              {
+                step: "3",
+                title: "Debug",
+                desc: "Find and fix the bugs without code-gen tools — faster fixes = better scores",
+              },
             ].map((item) => (
               <div
                 key={item.step}
@@ -286,7 +357,9 @@ export default async function Home() {
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-gh-success font-mono text-lg font-bold text-white">
                   {item.step}
                 </div>
-                <h4 className="mb-2 text-lg font-semibold text-white">{item.title}</h4>
+                <h4 className="mb-2 text-lg font-semibold text-white">
+                  {item.title}
+                </h4>
                 <p className="text-sm text-gh-text-muted">{item.desc}</p>
               </div>
             ))}
@@ -294,11 +367,8 @@ export default async function Home() {
 
           {/* Select commit screenshot */}
           <div className="group relative mt-8">
-            {/* Glow effect */}
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-gh-accent/20 via-gh-success/20 to-gh-accent/20 opacity-50 blur-lg transition-opacity group-hover:opacity-75" />
-            
             <div className="relative overflow-hidden rounded-xl border border-gh-border bg-gh-canvas-inset">
-              {/* Window header with dots */}
               <div className="flex items-center gap-3 border-b border-gh-border bg-gh-canvas-subtle px-4 py-3">
                 <div className="flex items-center gap-1.5">
                   <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
@@ -306,12 +376,12 @@ export default async function Home() {
                   <div className="h-3 w-3 rounded-full bg-[#28c840]" />
                 </div>
                 <span className="text-xs font-medium text-gh-text-muted">
-                  Select a commit and configure bug level
+                  Select a commit and configure difficulty
                 </span>
               </div>
               <img
                 src="/screenshots/screenshot-select-commit-to-stress-min.png"
-                alt="Screenshot showing the commit selection interface with stress level configuration"
+                alt="Screenshot showing the commit selection interface with difficulty configuration"
                 className="w-full"
               />
             </div>
@@ -320,11 +390,13 @@ export default async function Home() {
           {/* Stress Process Details */}
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             <div className="flex flex-col justify-center">
-              <h4 className="mb-3 text-lg font-semibold text-white">The Process</h4>
+              <h4 className="mb-3 text-lg font-semibold text-white">
+                The Process
+              </h4>
               <p className="text-sm leading-relaxed text-gh-text-muted">
-                When you click &quot;Bugger&quot;, our AI analyzes your code, 
-                picks files to inject bugs into, creates a new branch, and gives you a bug 
-                report describing the symptoms.
+                When you 'bugger up some code', our AI analyzes your code,
+                picks files to inject bugs into, creates a new branch, and gives
+                you a bug report describing the symptoms.
               </p>
             </div>
             <div className="md:col-span-2">
@@ -343,9 +415,10 @@ export default async function Home() {
           </div>
           <div className="rounded-xl border border-gh-border bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas p-8">
             <p className="mb-6 text-lg leading-relaxed text-gh-text-muted">
-              Once you&apos;ve created a buggered branch, here&apos;s how to debug it and get your score:
+              Once you&apos;ve created a buggered branch, here&apos;s how to
+              debug it and earn your score:
             </p>
-            
+
             <div className="space-y-4">
               {/* Step 1 */}
               <div className="flex gap-4">
@@ -353,12 +426,17 @@ export default async function Home() {
                   1
                 </div>
                 <div className="flex-1">
-                  <h4 className="mb-1 font-semibold text-white">Start the Timer</h4>
+                  <h4 className="mb-1 font-semibold text-white">
+                    Start the Timer
+                  </h4>
                   <p className="mb-2 text-sm text-gh-text-muted">
-                    Clone the buggered branch and create an empty commit with &quot;start&quot; in the message:
+                    Clone the buggered branch and create an empty commit with
+                    &quot;start&quot; in the message:
                   </p>
                   <div className="rounded-lg bg-gh-canvas p-3">
-                    <code className="text-sm text-gh-accent">git commit --allow-empty -m &quot;start&quot;</code>
+                    <code className="text-sm text-gh-accent">
+                      git commit --allow-empty -m &quot;start&quot;
+                    </code>
                   </div>
                 </div>
               </div>
@@ -369,10 +447,12 @@ export default async function Home() {
                   2
                 </div>
                 <div className="flex-1">
-                  <h4 className="mb-1 font-semibold text-white">Find & Fix the Bugs</h4>
+                  <h4 className="mb-1 font-semibold text-white">
+                    Find &amp; Fix the Bugs
+                  </h4>
                   <p className="text-sm text-gh-text-muted">
-                    Review the code, identify the issues, and make your fixes. 
-                    Remember: no AI code generation tools!
+                    Review the code, read the bug report, trace the logic, and
+                    make your fixes. No AI code generation tools!
                   </p>
                 </div>
               </div>
@@ -383,12 +463,17 @@ export default async function Home() {
                   3
                 </div>
                 <div className="flex-1">
-                  <h4 className="mb-1 font-semibold text-white">Stop the Timer</h4>
+                  <h4 className="mb-1 font-semibold text-white">
+                    Stop the Timer
+                  </h4>
                   <p className="mb-2 text-sm text-gh-text-muted">
-                    Commit your fixes with &quot;done&quot; or &quot;end&quot; in the message:
+                    Commit your fixes with &quot;done&quot; or &quot;end&quot; in
+                    the message:
                   </p>
                   <div className="rounded-lg bg-gh-canvas p-3">
-                    <code className="text-sm text-gh-accent">git commit -m &quot;done - fixed all bugs&quot;</code>
+                    <code className="text-sm text-gh-accent">
+                      git commit -m &quot;done - fixed all bugs&quot;
+                    </code>
                   </div>
                 </div>
               </div>
@@ -399,9 +484,12 @@ export default async function Home() {
                   4
                 </div>
                 <div className="flex-1">
-                  <h4 className="mb-1 font-semibold text-white">Get Your Score</h4>
+                  <h4 className="mb-1 font-semibold text-white">
+                    Get Your Score
+                  </h4>
                   <p className="text-sm text-gh-text-muted">
-                    Push your changes, return to Buggr, select your branch, and click &quot;Check Score&quot; to see your grade.
+                    Push your changes, return to Buggr, select your branch, and
+                    click &quot;Check Score&quot; to see your grade.
                   </p>
                 </div>
               </div>
@@ -419,8 +507,8 @@ export default async function Home() {
           </div>
           <div className="rounded-xl border border-gh-border bg-gradient-to-br from-gh-canvas-subtle to-gh-canvas p-8">
             <p className="mb-6 text-lg leading-relaxed text-gh-text-muted">
-              Fix the bugs, commit your changes, and come back to check your score.
-              You&apos;re graded based on how long it took to fix everything.
+              Your grade is based on how quickly you identify and fix the bugs.
+              Track your improvement over time and see how you stack up.
             </p>
 
             {/* Grade Cards */}
@@ -432,7 +520,9 @@ export default async function Home() {
               </div>
               <div className="rounded-lg border border-emerald-500/30 bg-gradient-to-br from-emerald-600/10 to-teal-600/10 p-4 text-center">
                 <div className="mb-1 text-2xl">🔥</div>
-                <div className="text-lg font-bold text-emerald-400">B Grade</div>
+                <div className="text-lg font-bold text-emerald-400">
+                  B Grade
+                </div>
                 <div className="text-xs text-gh-text-muted">Great</div>
               </div>
               <div className="rounded-lg border border-blue-500/30 bg-gradient-to-br from-blue-400/10 to-cyan-500/10 p-4 text-center">
@@ -443,7 +533,9 @@ export default async function Home() {
               <div className="rounded-lg border border-slate-500/30 bg-gradient-to-br from-slate-400/10 to-slate-500/10 p-4 text-center">
                 <div className="mb-1 text-2xl">💪</div>
                 <div className="text-lg font-bold text-slate-300">D Grade</div>
-                <div className="text-xs text-gh-text-muted">Keep practicing</div>
+                <div className="text-xs text-gh-text-muted">
+                  Keep practicing
+                </div>
               </div>
             </div>
 
@@ -452,34 +544,74 @@ export default async function Home() {
               <table className="w-full text-sm">
                 <thead className="bg-gh-canvas-subtle">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium text-gh-text-muted">Difficulty</th>
-                    <th className="px-4 py-3 text-center font-medium text-amber-300">A</th>
-                    <th className="px-4 py-3 text-center font-medium text-emerald-400">B</th>
-                    <th className="px-4 py-3 text-center font-medium text-blue-300">C</th>
-                    <th className="px-4 py-3 text-center font-medium text-slate-300">D</th>
+                    <th className="px-4 py-3 text-left font-medium text-gh-text-muted">
+                      Difficulty
+                    </th>
+                    <th className="px-4 py-3 text-center font-medium text-amber-300">
+                      A
+                    </th>
+                    <th className="px-4 py-3 text-center font-medium text-emerald-400">
+                      B
+                    </th>
+                    <th className="px-4 py-3 text-center font-medium text-blue-300">
+                      C
+                    </th>
+                    <th className="px-4 py-3 text-center font-medium text-slate-300">
+                      D
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gh-border">
                   <tr className="bg-gh-canvas">
-                    <td className="px-4 py-3 font-medium text-green-400">🌱 Easy</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">0-5 min</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">5-10 min</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">10-15 min</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">15+ min</td>
+                    <td className="px-4 py-3 font-medium text-green-400">
+                      🌱 Easy
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      0-5 min
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      5-10 min
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      10-15 min
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      15+ min
+                    </td>
                   </tr>
                   <tr className="bg-gh-canvas-subtle">
-                    <td className="px-4 py-3 font-medium text-yellow-400">🔥 Medium</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">0-7 min</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">7-11 min</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">11-15 min</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">15+ min</td>
+                    <td className="px-4 py-3 font-medium text-yellow-400">
+                      🔥 Medium
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      0-7 min
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      7-11 min
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      11-15 min
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      15+ min
+                    </td>
                   </tr>
                   <tr className="bg-gh-canvas">
-                    <td className="px-4 py-3 font-medium text-red-400">💀 Hard</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">0-10 min</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">10-15 min</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">15-20 min</td>
-                    <td className="px-4 py-3 text-center text-gh-text-muted">20+ min</td>
+                    <td className="px-4 py-3 font-medium text-red-400">
+                      💀 Hard
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      0-10 min
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      10-15 min
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      15-20 min
+                    </td>
+                    <td className="px-4 py-3 text-center text-gh-text-muted">
+                      20+ min
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -488,11 +620,8 @@ export default async function Home() {
 
           {/* Scorecard screenshot */}
           <div className="group relative mt-8">
-            {/* Glow effect */}
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-blue-500/20 opacity-50 blur-lg transition-opacity group-hover:opacity-75" />
-            
             <div className="relative overflow-hidden rounded-xl border border-gh-border bg-gh-canvas-inset">
-              {/* Window header with dots */}
               <div className="flex items-center gap-3 border-b border-gh-border bg-gh-canvas-subtle px-4 py-3">
                 <div className="flex items-center gap-1.5">
                   <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
@@ -518,17 +647,22 @@ export default async function Home() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-gh-border bg-gh-canvas-subtle">
               <TerminalIcon className="h-5 w-5 text-gh-accent" />
             </div>
-            <h3 className="text-2xl font-bold text-white">Choose Your Codebase</h3>
+            <h3 className="text-2xl font-bold text-white">
+              Choose Your Codebase
+            </h3>
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gh-border-muted">
                 <FolderIcon className="h-6 w-6 text-gh-text-muted" />
               </div>
-              <h4 className="mb-2 text-lg font-semibold text-white">Your Own Repos</h4>
+              <h4 className="mb-2 text-lg font-semibold text-white">
+                Your Own Repos
+              </h4>
               <p className="mb-4 text-sm leading-relaxed text-gh-text-muted">
-                Use any repository you have access to. We clone and branch on the
-                server so you don&apos;t need to pull locally unless you want to.
+                Use any repository you have access to — including projects you&apos;ve
+                built from tutorials, courses, or side projects. We clone and
+                branch on the server.
               </p>
               <div className="flex items-center gap-2 text-xs text-gh-text-muted">
                 <InfoIcon className="h-4 w-4" />
@@ -542,10 +676,12 @@ export default async function Home() {
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gh-success/20">
                 <CopyIcon className="h-6 w-6 text-gh-success-fg" />
               </div>
-              <h4 className="mb-2 text-lg font-semibold text-white">Practice Repos</h4>
+              <h4 className="mb-2 text-lg font-semibold text-white">
+                Practice Repos
+              </h4>
               <p className="mb-4 text-sm leading-relaxed text-gh-text-muted">
-                Fork one of our public repos designed for practice.
-                No risk to your real code.
+                Fork one of our public repos designed for practice. No risk to
+                your real code — perfect for getting started.
               </p>
               <div className="flex items-center gap-2 text-xs text-gh-success-fg">
                 <CheckIcon className="h-4 w-4" />
@@ -574,51 +710,56 @@ export default async function Home() {
           <div className="rounded-xl border border-gh-border bg-gh-canvas-subtle p-6">
             <div className="mb-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-lg border border-gh-border bg-gh-canvas p-4">
-                <h4 className="mb-2 font-semibold text-white">Try it on our server (recommended)</h4>
+                <h4 className="mb-2 font-semibold text-white">
+                  Play on our server (recommended)
+                </h4>
                 <ul className="space-y-1 text-sm text-gh-text-muted">
                   <li>• Sign in with GitHub</li>
-                  <li>• Pick a repo/commit and a difficulty</li>
-                  <li>• Debug in the browser — no local clone required</li>
+                  <li>• Pick a repo/commit and difficulty</li>
+                  <li>• Debug in the browser — no local setup needed</li>
                   <li>• Keep code-gen tools off for an honest score</li>
                 </ul>
               </div>
               <div className="rounded-lg border border-gh-border bg-gh-canvas p-4">
-                <h4 className="mb-2 font-semibold text-white">Run it yourself (open source)</h4>
+                <h4 className="mb-2 font-semibold text-white">
+                  Self-host it (open source)
+                </h4>
                 <ul className="space-y-1 text-sm text-gh-text-muted">
                   <li>• Clone the repo and install dependencies</li>
                   <li>• Configure GitHub OAuth + your LLM provider</li>
-                  <li>• Start the app locally and stress your own repos</li>
-                  <li>• Still keep code-gen tools off when you run challenges</li>
+                  <li>• Start the app locally</li>
+                  <li>• Still keep code-gen tools off during challenges</li>
                 </ul>
               </div>
             </div>
             <div className="mb-6">
-              <h4 className="mb-3 font-semibold text-white">Self-hosting? (optional)</h4>
+              <h4 className="mb-3 font-semibold text-white">
+                Self-hosting? (optional)
+              </h4>
               <p className="mb-3 text-sm text-gh-text-muted">
                 Want to run Buggr on your own infra? Clone and boot locally:
               </p>
               <div className="mb-3">
-                <h5 className="mb-2 text-sm font-semibold text-white">What you need</h5>
+                <h5 className="mb-2 text-sm font-semibold text-white">
+                  What you need
+                </h5>
                 <ul className="space-y-2 text-sm text-gh-text-muted">
                   <li className="flex items-center gap-2">
                     <span className="text-gh-success-fg">✓</span> Node.js 18+
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-gh-success-fg">✓</span> A GitHub account
+                    <span className="text-gh-success-fg">✓</span> A GitHub
+                    account
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-gh-success-fg">✓</span>
                     <span>
-                      An LLM provider — <span className="text-gh-accent">Anthropic</span> (recommended), OpenAI, or a local LLM
+                      An LLM provider —{" "}
+                      <span className="text-gh-accent">Anthropic</span>{" "}
+                      (recommended), OpenAI, or a local LLM
                       <span className="block text-xs text-gh-text-muted/70">
                         Anthropic works best. Local LLMs need a beefy machine.
                       </span>
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-gh-success-fg">✓</span>
-                    <span>
-                      Keep code-gen tools off. Runs are meant to measure your debugging skills.
                     </span>
                   </li>
                 </ul>
@@ -627,19 +768,21 @@ export default async function Home() {
                 <div className="rounded-lg bg-gh-canvas p-4">
                   <code className="text-sm text-gh-text-muted">
                     <span className="text-gh-text-muted">$</span>{" "}
-                    <span className="text-gh-accent">git clone</span> https://github.com/buggr-dev/buggr.git
+                    <span className="text-gh-accent">git clone</span>{" "}
+                    https://github.com/buggr-dev/buggr.git
                   </code>
                 </div>
                 <div className="rounded-lg bg-gh-canvas p-4">
                   <code className="text-sm text-gh-text-muted">
-                    <span className="text-gh-text-muted">$</span> <span className="text-gh-accent">cd</span>{" "}
-                    buggr && <span className="text-gh-accent">npm install</span>
+                    <span className="text-gh-text-muted">$</span>{" "}
+                    <span className="text-gh-accent">cd</span> buggr &&{" "}
+                    <span className="text-gh-accent">npm install</span>
                   </code>
                 </div>
                 <div className="rounded-lg bg-gh-canvas p-4">
                   <code className="text-sm text-gh-text-muted">
-                    <span className="text-gh-text-muted">$</span> <span className="text-gh-accent">npm run</span>{" "}
-                    dev
+                    <span className="text-gh-text-muted">$</span>{" "}
+                    <span className="text-gh-accent">npm run</span> dev
                   </code>
                 </div>
               </div>
@@ -662,36 +805,23 @@ export default async function Home() {
         {/* Final CTA */}
         <section className="text-center">
           <div className="rounded-xl border border-gh-border bg-gradient-to-r from-gh-danger/10 via-gh-canvas-subtle to-gh-success/10 p-10">
-            <h3 className="mb-4 text-2xl font-bold text-white">Ready to find out?</h3>
+            <h3 className="mb-4 text-2xl font-bold text-white">
+              Ready to prove you can actually code?
+            </h3>
             <p className="mx-auto mb-6 max-w-lg text-gh-text-muted">
-              Connect your GitHub account and start debugging. No local clone, and no code-gen tools.
+              Connect your GitHub, pick a codebase — your own project, a tutorial
+              repo, or one of ours — and start debugging.
             </p>
-            {isWebsiteMode ? (
-              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
-                <Button type="button" variant="primary" size="lg">
-                  <GitHubIcon className="h-5 w-5" />
-                  View on GitHub
-                </Button>
-              </a>
-            ) : (
-              <form
-                action={async () => {
-                  "use server";
-                  await signIn("github", { redirectTo: "/dashboard" });
-                }}
-              >
-                <Button type="submit" variant="primary" size="lg">
-                  <GitHubIcon className="h-5 w-5" />
-                  Start Buggering
-                </Button>
-              </form>
-            )}
+            <AuthButton size="lg" />
           </div>
         </section>
 
         {/* Footer */}
         <footer className="mt-16 border-t border-gh-border pt-8 text-center text-sm text-gh-text-muted">
-          <p>Built for developers who want to get better at debugging</p>
+          <p>
+            Built for developers who want to get better at debugging in the AI
+            era
+          </p>
         </footer>
       </main>
     </div>
