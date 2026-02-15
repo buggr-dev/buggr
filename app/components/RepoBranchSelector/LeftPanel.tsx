@@ -112,7 +112,7 @@ export function LeftPanel({
       placeholder="Choose a repository..."
       options={repos.map((repo) => ({
         value: repo.id,
-        label: `${repo.full_name}${repo.private ? " 🔒" : ""}`,
+        label: repo.full_name,
       }))}
     />
   );

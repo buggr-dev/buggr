@@ -337,7 +337,7 @@ export default async function Home() {
               {
                 step: "1",
                 title: "Connect",
-                desc: "Sign in with GitHub — we securely clone your repo on the server",
+                desc: "Sign in with GitHub — we only access your public repositories, never private ones",
               },
               {
                 step: "2",
@@ -660,13 +660,13 @@ export default async function Home() {
                 Your Own Repos
               </h4>
               <p className="mb-4 text-sm leading-relaxed text-gh-text-muted">
-                Use any repository you have access to — including projects you&apos;ve
-                built from tutorials, courses, or side projects. We clone and
-                branch on the server.
+                Use any of your public repositories — including projects you&apos;ve
+                built from tutorials, courses, or side projects. We never access
+                private repos.
               </p>
               <div className="flex items-center gap-2 text-xs text-gh-text-muted">
                 <InfoIcon className="h-4 w-4" />
-                Requires write access to create branches
+                Public repos only — your private code stays private
               </div>
             </div>
             <div className="relative rounded-xl border-2 border-gh-success bg-gradient-to-br from-gh-success/10 to-gh-canvas-subtle p-6">
@@ -809,8 +809,9 @@ export default async function Home() {
               Ready to prove you can actually code?
             </h3>
             <p className="mx-auto mb-6 max-w-lg text-gh-text-muted">
-              Connect your GitHub, pick a codebase — your own project, a tutorial
-              repo, or one of ours — and start debugging.
+              Connect your GitHub, pick a public codebase — your own project, a
+              tutorial repo, or one of ours — and start debugging. We never
+              access private repos.
             </p>
             <AuthButton size="lg" />
           </div>
