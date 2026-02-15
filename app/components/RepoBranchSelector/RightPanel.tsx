@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { GitHubRepo, GitHubCommit, GitHubCommitDetails, StressMetadata } from "@/lib/github";
 import { formatFullDate } from "@/lib/date";
 import { Button } from "@/app/components/inputs/Button";
-import { EmptyState, EmptyStateIcons } from "@/app/components/EmptyState";
+
 import { FileChangeList } from "@/app/components/commits/FileChangeList";
 import { useState, useEffect, useRef } from "react";
 import { CreateBranchForm } from "@/app/components/stress/CreateBranchForm";
@@ -393,7 +393,52 @@ export function RightPanel({
           </div>
         </div>
       ) : (
-        <EmptyState icon={EmptyStateIcons.commits} title="No commit selected" description="Select a commit from the list to view changed files" />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-md">
+            <div className="mb-6 text-center">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border border-gh-border bg-gh-canvas-subtle">
+                <BuggrIcon className="h-7 w-7 text-gh-text-muted" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">How it works</h3>
+              <p className="mt-1 text-sm text-gh-text-muted">Get started in a few steps</p>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                {
+                  step: "1",
+                  title: "Select a branch",
+                  desc: "Pick a branch from the left panel to see its recent commits.",
+                },
+                {
+                  step: "2",
+                  title: "Select a commit",
+                  desc: "Choose a commit — this is the code snapshot we'll inject bugs into.",
+                },
+                {
+                  step: "3",
+                  title: "Bugger up this commit",
+                  desc: "We'll take random files from your commit, create a new branch, and generate realistic bugs using AI.",
+                },
+                {
+                  step: "4",
+                  title: "Find & fix the bugs",
+                  desc: "Clone the buggered branch, debug without AI tools, and push your fixes — you'll be scored on speed and accuracy.",
+                },
+              ].map((item) => (
+                <div key={item.step} className="flex gap-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gh-accent/15 text-xs font-bold text-gh-accent">
+                    {item.step}
+                  </div>
+                  <div className="pt-0.5">
+                    <p className="text-sm font-medium text-white">{item.title}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-gh-text-muted">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
