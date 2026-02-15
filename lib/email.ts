@@ -548,7 +548,7 @@ function generateWelcomeEmailHtml(params: {
               <div style="background-color: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px;">
                 <p style="margin: 0 0 8px; color: #ffffff; font-size: 14px; font-weight: 600;">💡 Pro Tip</p>
                 <p style="margin: 0; color: #8b949e; font-size: 13px; line-height: 1.5;">
-                  Invite friends to earn more coins! You'll get <strong style="color: #58a6ff;">30 coins</strong> for your first invite, 
+                  Invite friends to earn more coins! You'll get <strong style="color: #58a6ff;">50 coins</strong> for your first invite, 
                   plus <strong style="color: #58a6ff;">30 more</strong> for each friend who signs up.
                 </p>
               </div>
@@ -606,7 +606,7 @@ HOW BUGGR WORKS
 
 💡 PRO TIP
 ----------
-Invite friends to earn more coins! You'll get 30 coins for your first invite, 
+Invite friends to earn more coins! You'll get 50 coins for your first invite, 
 plus 30 more for each friend who signs up.
 
 Start debugging: ${dashboardUrl}

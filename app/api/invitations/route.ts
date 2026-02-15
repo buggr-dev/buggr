@@ -5,10 +5,10 @@ import { sendInvitationEmail } from "@/lib/email";
 import crypto from "crypto";
 
 /** Coins awarded for sending first invitations (one-time bonus) */
-const INVITE_BONUS_COINS = 30;
+const INVITE_BONUS_COINS = 50;
 
 /** Coins awarded when an invited user signs up */
-const SIGNUP_BONUS_COINS = 30;
+const SIGNUP_BONUS_COINS = 50;
 
 /**
  * Response type for invitation data.
@@ -70,7 +70,7 @@ export async function GET() {
  * POST /api/invitations
  * 
  * Creates invitations for up to 5 email addresses.
- * Awards 30 coins to the user (one-time only).
+ * Awards 50 coins to the user (one-time only).
  * 
  * @param request - Request body containing emails array
  * @returns Created invitations and updated coin balance

@@ -60,7 +60,7 @@ export function InvitePromptModal({ hasInvites, isLoading }: InvitePromptModalPr
         {/* Description */}
         <p className="mb-6 text-sm text-gh-text-muted">
           Invite your friends to Buggr and get{" "}
-          <span className="font-semibold text-amber-400">30 coins</span> for your first invite.
+          <span className="font-semibold text-amber-400">50 coins</span> for your first invite.
           Plus, earn{" "}
           <span className="font-semibold text-amber-400">30 more coins</span> for each friend who signs up!
         </p>

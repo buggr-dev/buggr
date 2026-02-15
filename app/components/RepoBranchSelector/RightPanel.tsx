@@ -149,7 +149,7 @@ export function RightPanel({
                 className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-xs font-medium text-green-400 transition-colors hover:border-green-500/50 hover:bg-green-500/20"
               >
                 <BuggrIcon className="h-4 w-4" />
-                Send 1 invite and earn 30 coins now
+                Send 1 invite and earn 50 coins now
               </Link>
             )}
             <Link

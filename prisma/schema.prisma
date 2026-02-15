@@ -31,10 +31,10 @@ model User {
   gitProfileUrl String?   // URL to their profile
 
   // Coin system for usage limiting
-  coins         Int       @default(10)  // Users start with 10 coins
+  coins         Int       @default(50)  // Users start with 50 coins
 
   // Invitation system
-  hasUsedInviteBonus Boolean @default(false)  // True after user sends invites (gets 30 coins once)
+  hasUsedInviteBonus Boolean @default(false)  // True after user sends invites (gets 50 coins once)
   invitedByCode      String?                  // The invitation code used to sign up (if any)
 
   // Relations
@@ -219,8 +219,8 @@ model TokenUsage {
 // ============================================================================
 
 /// Tracks invitations sent by users for the referral bonus system.
-/// Users can invite up to 5 people once and get 30 coins.
-/// When an invited user signs up, the inviter gets an additional 30 coins.
+/// Users can invite up to 5 people once and get 50 coins.
+/// When an invited user signs up, the inviter gets an additional 50 coins.
 model Invitation {
   id        String   @id @default(cuid())
   
@@ -238,7 +238,7 @@ model Invitation {
   acceptedByUserId String?  // ID of the user who accepted (after signup)
   
   // Bonus tracking
-  signupBonusAwarded Boolean @default(false)  // True if inviter got 30 coins for this signup
+  signupBonusAwarded Boolean @default(false)  // True if inviter got 50 coins for this signup
   
   createdAt DateTime @default(now())
 

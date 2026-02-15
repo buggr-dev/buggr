@@ -21,7 +21,7 @@ import { Container } from "@/app/components/Container";
 import { CoinsUpsell } from "../components/CoinsUpsell";
 
 /** Coins awarded for sending invitations */
-const INVITE_BONUS_COINS = 30;
+const INVITE_BONUS_COINS = 50;
 /** Coins awarded per signup from invitation */
 const SIGNUP_BONUS_COINS = 30;
 
