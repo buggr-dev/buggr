@@ -120,7 +120,7 @@ export async function fetchPublicRepos(username: string): Promise<GitHubRepo[]> 
  * @returns Array of repository objects
  */
 export async function fetchUserRepos(accessToken: string): Promise<GitHubRepo[]> {
-  const response = await fetch(`${GITHUB_API_BASE}/user/repos?sort=updated&per_page=100`, {
+  const response = await fetch(`${GITHUB_API_BASE}/user/repos?sort=updated&per_page=100&visibility=public`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: "application/vnd.github.v3+json",

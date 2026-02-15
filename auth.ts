@@ -33,8 +33,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     GitHub({
       authorization: {
         params: {
-          // Request repo scope to access repository data including branches
-          scope: "read:user user:email repo",
+          // Request public_repo scope to access only public repository data
+          scope: "read:user user:email public_repo",
         },
       },
     }),
